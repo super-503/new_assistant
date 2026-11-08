@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zengame.ai.repository.ai.mapper.NewsAiModelSettingMapper">
+
+    <select id="select" resultType="com.zengame.ai.repository.ai.po.NewsAiModelSettingPO">
+        SELECT model_url AS modelUrl, model, api_key AS apiKey
+        FROM news_ai_model_setting
+        WHERE id = 1
+    </select>
+
+    <insert id="upsert">
+        INSERT INTO news_ai_model_setting (id, model_url, model, api_key)
+        VALUES (1, #{setting.modelUrl}, #{setting.model},
+            <choose>
+                <when test="setting.apiKey != null">#{setting.apiKey}</when>
+                <otherwise>#{initialApiKey,jdbcType=VARCHAR}</otherwise>
+            </choose>
+        )
+        ON DUPLICATE KEY UPDATE
+            api_key =
+                <choose>
+                    <when test="setting.apiKey != null">#{setting.apiKey}</when>
+                    <otherwise>CASE WHEN model_url = #{setting.modelUrl} THEN api_key ELSE NULL END</otherwise>
+                </choose>,
+            model_url = #{setting.modelUrl},
+            model = #{setting.model}
+    </insert>
+</mapper>

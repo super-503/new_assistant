@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zengame.ai.repository.ai.mapper.NewsFeedMapper">
+
+    <sql id="BaseColumnList">
+        id,
+        channel_code AS channelCode,
+        source_key AS sourceKey,
+        source_name AS sourceName,
+        display_name AS displayName,
+        avatar_url AS avatarUrl,
+        description,
+        content_type AS contentType,
+        enabled,
+        pull_status AS pullStatus,
+        pull_error AS pullError,
+        last_pull_time AS lastPullTime,
+        cursor_time AS cursorTime,
+        create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO news_feed
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            channel_code,
+            source_key,
+            source_name,
+            display_name,
+            <if test="avatarUrl != null">avatar_url,</if>
+            <if test="description != null">description,</if>
+            content_type,
+            <if test="enabled != null">enabled,</if>
+            <if test="pullStatus != null">pull_status,</if>
+            <if test="pullError != null">pull_error,</if>
+            <if test="lastPullTime != null">last_pull_time,</if>
+            <if test="cursorTime != null">cursor_time,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            #{channelCode},
+            #{sourceKey},
+            #{sourceName},
+            #{displayName},
+            <if test="avatarUrl != null">#{avatarUrl},</if>
+            <if test="description != null">#{description},</if>
+            #{contentType},
+            <if test="enabled != null">#{enabled},</if>
+            <if test="pullStatus != null">#{pullStatus},</if>
+            <if test="pullError != null">#{pullError},</if>
+            <if test="lastPullTime != null">#{lastPullTime},</if>
+            <if test="cursorTime != null">#{cursorTime},</if>
+        </trim>
+    </insert>
+
+    <select id="selectById" resultType="com.zengame.ai.repository.ai.po.NewsFeedPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_feed
+        WHERE id = #{id}
+    </select>
+
+    <update id="updateById">
+        UPDATE news_feed
+        SET source_name    = #{sourceName},
+            display_name   = #{displayName},
+            avatar_url     = #{avatarUrl},
+            description    = #{description},
+            content_type   = #{contentType},
+            enabled        = #{enabled},
+            pull_status    = #{pullStatus},
+            pull_error     = #{pullError},
+            last_pull_time = #{lastPullTime},
+            cursor_time    = #{cursorTime}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectByChannelCode" resultType="com.zengame.ai.repository.ai.po.NewsFeedPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_feed
+        WHERE channel_code = #{channelCode}
+        ORDER BY id
+    </select>
+
+    <select id="selectEnabledByChannelCode" resultType="com.zengame.ai.repository.ai.po.NewsFeedPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_feed
+        WHERE channel_code = #{channelCode}
+          AND enabled = 1
+        ORDER BY id
+    </select>
+
+    <select id="selectByChannelAndSourceKey" resultType="com.zengame.ai.repository.ai.po.NewsFeedPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_feed
+        WHERE channel_code = #{channelCode}
+          AND source_key = #{sourceKey}
+    </select>
+
+    <update id="updateSettingsById">
+        UPDATE news_feed
+        SET display_name = #{displayName},
+            content_type = #{contentType},
+            enabled      = #{enabled}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateEnabledById">
+        UPDATE news_feed
+        SET enabled = #{enabled}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM news_feed
+        WHERE id = #{id}
+    </delete>
+
+    <update id="updatePullStateById">
+        UPDATE news_feed
+        SET pull_status    = #{pullStatus},
+            pull_error     = #{pullError},
+            last_pull_time = #{lastPullTime},
+            cursor_time    = #{cursorTime}
+        WHERE id = #{id}
+    </update>
+</mapper>

@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zengame.ai.repository.ai.mapper.NewsItemMapper">
+
+    <sql id="BaseColumnList">
+        id,
+        feed_id AS feedId,
+        channel_code AS channelCode,
+        canonical_url AS canonicalUrl,
+        content_type AS contentType,
+        origin_title AS originTitle,
+        author,
+        author_avatar_url AS authorAvatarUrl,
+        publish_time AS publishTime,
+        cover_url AS coverUrl,
+        body_html AS bodyHtml,
+        playback_json AS playbackJson,
+        stats_json AS statsJson,
+        duration_seconds AS durationSeconds,
+        status,
+        ai_values_json AS aiValuesJson,
+        ai_failed_keys_json AS aiFailedKeysJson,
+        edited_keys_json AS editedKeysJson,
+        reject_reason_id AS rejectReasonId,
+        reject_note AS rejectNote,
+        reviewer,
+        review_time AS reviewTime,
+        digest_sent_time AS digestSentTime,
+        create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <!-- 新入库资讯尚未加工：AI 结果固定为空对象，未生成、已修改、审核相关列取库表默认值 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO news_item
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            feed_id,
+            channel_code,
+            canonical_url,
+            content_type,
+            origin_title,
+            author,
+            author_avatar_url,
+            publish_time,
+            cover_url,
+            body_html,
+            playback_json,
+            <if test="statsJson != null">stats_json,</if>
+            duration_seconds,
+            <if test="status != null">status,</if>
+            ai_values_json,
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            #{feedId},
+            #{channelCode},
+            #{canonicalUrl},
+            #{contentType},
+            #{originTitle},
+            #{author},
+            #{authorAvatarUrl},
+            #{publishTime},
+            #{coverUrl},
+            #{bodyHtml},
+            #{playbackJson},
+            <if test="statsJson != null">#{statsJson},</if>
+            #{durationSeconds},
+            <if test="status != null">#{status},</if>
+            '{}',
+        </trim>
+    </insert>
+
+    <select id="selectById" resultType="com.zengame.ai.repository.ai.po.NewsItemPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_item
+        WHERE id = #{id}
+    </select>
+
+    <update id="updateById">
+        UPDATE news_item
+        SET origin_title        = #{originTitle},
+            author              = #{author},
+            author_avatar_url   = #{authorAvatarUrl},
+            publish_time        = #{publishTime},
+            cover_url           = #{coverUrl},
+            body_html           = #{bodyHtml},
+            playback_json       = #{playbackJson},
+            stats_json          = #{statsJson},
+            duration_seconds    = #{durationSeconds},
+            status              = #{status},
+            ai_values_json      = #{aiValuesJson},
+            ai_failed_keys_json = #{aiFailedKeysJson},
+            edited_keys_json    = #{editedKeysJson},
+            reject_reason_id    = #{rejectReasonId},
+            reject_note         = #{rejectNote},
+            reviewer            = #{reviewer},
+            review_time         = #{reviewTime}
+        WHERE id = #{id}
+    </update>
+
+    <update id="markPendingWithoutProcessing">
+        UPDATE news_item
+        SET status = 'PENDING'
+        WHERE status = 'PROCESSING' AND id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="selectByCanonicalUrl" resultType="com.zengame.ai.repository.ai.po.NewsItemPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_item
+        WHERE canonical_url = #{canonicalUrl}
+    </select>
+
+    <select id="selectByIdForUpdate" resultType="com.zengame.ai.repository.ai.po.NewsItemPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_item
+        WHERE id = #{id}
+        FOR UPDATE
+    </select>
+
+    <select id="selectUnsentDigestItemsForUpdate" resultType="com.zengame.ai.repository.ai.po.NewsItemPO">
+        SELECT id, origin_title AS originTitle, author, canonical_url AS canonicalUrl
+        FROM news_item
+        WHERE status = #{status} AND digest_sent_time IS NULL
+        ORDER BY review_time, id
+        LIMIT #{limit}
+        FOR UPDATE
+    </select>
+
+    <update id="markDigestSent">
+        UPDATE news_item
+        SET digest_sent_time = CURRENT_TIMESTAMP
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 展示标题：AI 字段 title 为非空字符串时取它，否则取原文标题；标签筛选同一字段内任一值命中即可 -->
+    <select id="selectByQuery" resultType="com.zengame.ai.repository.ai.po.NewsItemPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_item
+        <where>
+            <if test="query.status != null">
+                AND status = #{query.status}
+            </if>
+            <if test="query.contentType != null">
+                AND content_type = #{query.contentType}
+            </if>
+            <if test="query.channelCode != null">
+                AND channel_code = #{query.channelCode}
+            </if>
+            <if test="query.feedId != null">
+                AND feed_id = #{query.feedId}
+            </if>
+            <if test="query.publishBegin != null">
+                AND publish_time &gt;= #{query.publishBegin}
+            </if>
+            <if test="query.publishEnd != null">
+                AND publish_time &lt;= #{query.publishEnd}
+            </if>
+            <if test="query.keyword != null">
+                AND
+                <choose>
+                    <when test="query.useAiTitle">
+                        CASE
+                            WHEN JSON_TYPE(JSON_EXTRACT(ai_values_json, '$.title')) = 'STRING'
+                                AND TRIM(JSON_UNQUOTE(JSON_EXTRACT(ai_values_json, '$.title'))) &lt;&gt; ''
+                                THEN JSON_UNQUOTE(JSON_EXTRACT(ai_values_json, '$.title'))
+                            ELSE origin_title
+                        END
+                    </when>
+                    <otherwise>origin_title</otherwise>
+                </choose>
+                LIKE CONCAT('%', #{query.keyword}, '%')
+            </if>
+            <if test="query.tagFilters != null">
+                <foreach collection="query.tagFilters" item="tagFilter">
+                    AND
+                    <foreach collection="tagFilter.values" item="tagValue" open="(" separator=" OR " close=")">
+                        JSON_CONTAINS(ai_values_json, JSON_QUOTE(#{tagValue}), CONCAT('$.', #{tagFilter.fieldKey}))
+                    </foreach>
+                </foreach>
+            </if>
+        </where>
+        <choose>
+            <when test="query.oldestFirst">
+                ORDER BY publish_time, id
+            </when>
+            <otherwise>
+                ORDER BY publish_time DESC, id DESC
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="countByStatus" resultType="long">
+        SELECT COUNT(*)
+        FROM news_item
+        WHERE status = #{status}
+    </select>
+
+    <select id="selectGroupCountByStatus" resultType="com.zengame.ai.business.news.library.domain.bo.NewsItemGroupCountBO">
+        SELECT content_type AS contentType,
+               channel_code AS channelCode,
+               feed_id      AS feedId,
+               COUNT(*)     AS itemCount
+        FROM news_item
+        WHERE status = #{status}
+        GROUP BY content_type, channel_code, feed_id
+    </select>
+</mapper>

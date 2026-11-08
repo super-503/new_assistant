@@ -1,0 +1,833 @@
+/**
+ * 资讯中心皮肤下的 Element Plus 补丁：尺寸、圆角、形态与动效。
+ * 颜色变量（--el-color-primary 等）在 semantic.css 的资讯中心皮肤块里映射，这里只用语义 token。
+ * 由 NewsAdminPage.vue 引入；所有规则都限定在资讯中心页面及其浮层类名之下，不影响其他页面。
+ *
+ * 选择器前缀用 :is()，特异性取其中一个类，正好比 Element 自带的同名规则高一档。
+ */
+$skin: ':is(.news-admin-page, .news-admin-drawer, .news-admin-dialog, .news-admin-message-box, .news-admin-popper)';
+
+/* ============ 输入框 / 文本域：填充底色、无静态描边、聚焦 2px 主色 ============ */
+#{$skin} {
+  .el-input,
+  .el-textarea {
+    --el-input-height: 40px;
+    --el-input-border-radius: var(--zg-radius-md);
+    --el-input-bg-color: var(--control-bg);
+    --el-input-border-color: var(--control-border);
+    --el-input-hover-border-color: var(--control-hover-border);
+    --el-input-focus-border-color: var(--control-focus-border);
+    --el-input-text-color: var(--control-text);
+    --el-input-placeholder-color: var(--control-placeholder);
+    --el-input-icon-color: var(--second-color);
+    --el-input-clear-hover-color: var(--main-color);
+
+    font-size: var(--zg-text-base);
+  }
+
+  .el-input__wrapper {
+    padding: 0 var(--zg-space-lg);
+    border-radius: var(--zg-radius-md);
+    background-color: var(--control-bg);
+    box-shadow: 0 0 0 1px var(--control-border) inset;
+    transition: box-shadow var(--zg-duration-base) var(--zg-ease-m3-standard);
+
+    &:hover {
+      box-shadow: 0 0 0 1px var(--control-hover-border) inset;
+    }
+
+    &.is-focus {
+      box-shadow: 0 0 0 2px var(--control-focus-border) inset;
+    }
+  }
+
+  .el-input__inner {
+    color: var(--control-text);
+
+    &::placeholder {
+      color: var(--control-placeholder);
+    }
+  }
+
+  .el-textarea__inner {
+    padding: var(--zg-space-md) var(--zg-space-lg);
+    border-radius: var(--zg-radius-md);
+    background-color: var(--control-bg);
+    box-shadow: 0 0 0 1px var(--control-border) inset;
+    color: var(--control-text);
+    font-family: inherit;
+    font-size: var(--zg-text-base);
+    line-height: 22px;
+    transition: box-shadow var(--zg-duration-base) var(--zg-ease-m3-standard);
+
+    &::placeholder {
+      color: var(--control-placeholder);
+    }
+
+    &:hover {
+      box-shadow: 0 0 0 1px var(--control-hover-border) inset;
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 2px var(--control-focus-border) inset;
+    }
+  }
+
+  /* 锁定的字段：保持原底色与文字色，变淡由外层表单项统一处理 */
+  .el-input.is-disabled .el-input__wrapper,
+  .el-textarea.is-disabled .el-textarea__inner {
+    background-color: var(--control-bg);
+    box-shadow: 0 0 0 1px var(--control-border) inset;
+  }
+
+  .el-input.is-disabled .el-input__inner,
+  .el-textarea.is-disabled .el-textarea__inner {
+    color: var(--control-text);
+    -webkit-text-fill-color: var(--control-text);
+  }
+
+  /* 出错：描边变红 */
+  .el-form-item.is-error .el-input__wrapper,
+  .el-form-item.is-error .el-textarea__inner,
+  .el-form-item.is-error .el-select__wrapper {
+    box-shadow: 0 0 0 1px var(--control-error-border) inset;
+  }
+
+  /* 搜索框：36px 高、全圆角、surface-container-high 底 */
+  .el-input.news-search-input {
+    --el-input-height: 36px;
+
+    .el-input__wrapper {
+      padding: 0 var(--zg-space-lg);
+      border-radius: var(--zg-radius-pill);
+      background-color: var(--surface-container-high);
+      box-shadow: none;
+
+      &.is-focus {
+        box-shadow: 0 0 0 2px var(--control-focus-border) inset;
+      }
+    }
+
+    .el-input__prefix {
+      color: var(--second-color);
+    }
+  }
+}
+
+/* ============ 选择器 ============ */
+#{$skin} {
+  .el-select__wrapper {
+    min-height: 40px;
+    padding: 0 var(--zg-space-md) 0 var(--zg-space-lg);
+    border-radius: var(--zg-radius-md);
+    background-color: var(--control-bg);
+    box-shadow: 0 0 0 1px var(--control-border) inset;
+    font-size: var(--zg-text-base);
+    transition: box-shadow var(--zg-duration-base) var(--zg-ease-m3-standard);
+
+    &.is-hovering:not(.is-focused) {
+      box-shadow: 0 0 0 1px var(--control-hover-border) inset;
+    }
+
+    &.is-focused {
+      box-shadow: 0 0 0 2px var(--control-focus-border) inset;
+    }
+
+    &.is-disabled {
+      background-color: var(--control-bg);
+      box-shadow: 0 0 0 1px var(--control-border) inset;
+      cursor: default;
+    }
+  }
+
+  .el-select__selected-item,
+  .el-select__wrapper.is-disabled .el-select__selected-item {
+    color: var(--control-text);
+  }
+
+  .el-select__placeholder.is-transparent {
+    color: var(--control-placeholder);
+  }
+
+  .el-select__caret {
+    color: var(--second-color);
+  }
+}
+
+/* ============ 表单项：标签在上方 13px 次要色，必填星号红色，报错在下方 12px ============ */
+#{$skin} {
+  .el-form-item {
+    margin-bottom: var(--zg-space-xl);
+  }
+
+  .el-form--label-top .el-form-item .el-form-item__label {
+    margin-bottom: var(--zg-space-sm);
+    padding: 0;
+    color: var(--second-color);
+    font-size: var(--zg-text-md);
+    line-height: 20px;
+    font-weight: var(--zg-weight-medium);
+  }
+
+  .el-form-item.is-required:not(.is-no-asterisk).asterisk-right > .el-form-item__label::after {
+    color: var(--status-rejected);
+  }
+
+  .el-form-item__error {
+    position: static;
+    padding-top: var(--zg-space-xs);
+    color: var(--status-rejected);
+    font-size: var(--zg-text-sm);
+    line-height: 16px;
+  }
+}
+
+/* ============ 按钮：32px 高、全圆角、悬停状态层 ============ */
+#{$skin} {
+  .el-button {
+    /* 默认：次要实底（secondary-container） */
+    --el-button-bg-color: var(--selected-bg);
+    --el-button-text-color: var(--selected-text);
+    --el-button-border-color: transparent;
+    --el-button-hover-bg-color: var(--selected-bg);
+    --el-button-hover-text-color: var(--selected-text);
+    --el-button-hover-border-color: transparent;
+    --el-button-active-bg-color: var(--selected-bg);
+    --el-button-active-text-color: var(--selected-text);
+    --el-button-active-border-color: transparent;
+    --el-button-disabled-bg-color: var(--disabled-container);
+    --el-button-disabled-text-color: var(--text-disabled);
+    --el-button-disabled-border-color: transparent;
+
+    position: relative;
+    isolation: isolate;
+    height: 32px;
+    padding: 0 var(--zg-space-xl);
+    overflow: hidden;
+    border-radius: var(--zg-radius-pill);
+    font-size: var(--zg-text-base);
+    font-weight: var(--zg-weight-medium);
+    letter-spacing: 0.1px;
+    transition: transform var(--zg-duration-fast) var(--zg-ease-m3-standard);
+
+    > span {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--zg-space-sm);
+    }
+
+    /* 悬停 / 按下的状态层 */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      border-radius: inherit;
+      background: currentColor;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--zg-duration-base) var(--zg-ease-m3-standard);
+    }
+
+    &:not(.is-disabled):hover::before {
+      opacity: 0.08;
+    }
+
+    &:not(.is-disabled):active::before {
+      opacity: 0.12;
+    }
+
+    &:not(.is-disabled):active {
+      transform: scale(0.97);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: 1px;
+    }
+
+    & + .el-button {
+      margin-left: var(--zg-space-md);
+    }
+  }
+
+  /* 主操作：主色实底 */
+  .el-button--primary {
+    --el-button-bg-color: var(--brand-indigo);
+    --el-button-text-color: var(--on-brand);
+    --el-button-hover-bg-color: var(--brand-indigo);
+    --el-button-hover-text-color: var(--on-brand);
+    --el-button-active-bg-color: var(--brand-indigo);
+    --el-button-active-text-color: var(--on-brand);
+  }
+
+  /* 文字按钮：主色文字，危险操作用 error 色 */
+  .el-button.is-text {
+    --el-button-bg-color: transparent;
+    --el-button-text-color: var(--brand-indigo);
+    --el-button-hover-bg-color: transparent;
+    --el-button-hover-text-color: var(--brand-indigo);
+    --el-button-active-bg-color: transparent;
+    --el-button-active-text-color: var(--brand-indigo);
+    --el-button-disabled-bg-color: transparent;
+
+    padding: 0 var(--zg-space-lg);
+    color: var(--el-button-text-color);
+  }
+
+  .el-button.is-text:not(.is-disabled):hover,
+  .el-button.is-text:not(.is-disabled):focus,
+  .el-button.is-text:not(.is-disabled):active {
+    background-color: transparent;
+  }
+
+  .el-button--danger.is-text {
+    --el-button-text-color: var(--status-rejected);
+    --el-button-hover-text-color: var(--status-rejected);
+    --el-button-active-text-color: var(--status-rejected);
+  }
+
+  /* 描边按钮 */
+  .el-button.is-plain {
+    --el-button-bg-color: transparent;
+    --el-button-text-color: var(--brand-indigo);
+    --el-button-border-color: var(--surface-outline);
+    --el-button-hover-bg-color: transparent;
+    --el-button-hover-text-color: var(--brand-indigo);
+    --el-button-hover-border-color: var(--surface-outline);
+    --el-button-active-bg-color: transparent;
+    --el-button-active-text-color: var(--brand-indigo);
+    --el-button-active-border-color: var(--surface-outline);
+    --el-button-disabled-bg-color: transparent;
+    --el-button-disabled-border-color: var(--disabled-container);
+  }
+
+  /* 加载中：环形进度替换图标 */
+  .el-button.is-loading::before {
+    opacity: 0;
+  }
+}
+
+/* ============ 开关：36 × 20，滑块平移 ============ */
+#{$skin} {
+  .el-switch {
+    --el-switch-on-color: var(--brand-indigo);
+    --el-switch-off-color: var(--surface-container-highest);
+
+    height: 20px;
+    line-height: 20px;
+  }
+
+  .el-switch__core {
+    min-width: 36px;
+    height: 20px;
+    border: 2px solid var(--surface-outline);
+    border-radius: 10px;
+    background: var(--surface-container-highest);
+    transition:
+      border-color var(--zg-duration-base) var(--zg-ease-m3-standard),
+      background-color var(--zg-duration-base) var(--zg-ease-m3-standard);
+
+    .el-switch__action {
+      left: 3px;
+      width: 10px;
+      height: 10px;
+      background-color: var(--surface-outline);
+      transition:
+        left 250ms var(--zg-ease-m3-standard),
+        width 250ms var(--zg-ease-m3-standard),
+        height 250ms var(--zg-ease-m3-standard),
+        background-color 250ms var(--zg-ease-m3-standard);
+    }
+  }
+
+  .el-switch.is-checked .el-switch__core {
+    border-color: var(--brand-indigo);
+    background-color: var(--brand-indigo);
+
+    .el-switch__action {
+      left: calc(100% - 15px);
+      width: 14px;
+      height: 14px;
+      background-color: var(--on-brand);
+    }
+  }
+
+  .el-switch:not(.is-disabled):active .el-switch__action {
+    width: 16px;
+    height: 16px;
+  }
+
+  .el-switch__input:focus-visible ~ .el-switch__core {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+}
+
+/* ============ 复选框：18px、2px 描边，勾选时主色实底 ============ */
+#{$skin} {
+  .el-checkbox {
+    --el-checkbox-text-color: var(--main-color);
+    --el-checkbox-checked-text-color: var(--main-color);
+    --el-checkbox-input-border-color-hover: var(--main-color);
+    --el-checkbox-checked-bg-color: var(--brand-indigo);
+    --el-checkbox-checked-input-border-color: var(--brand-indigo);
+    --el-checkbox-checked-icon-color: var(--on-brand);
+
+    height: 32px;
+    color: var(--main-color);
+    font-weight: var(--zg-weight-regular);
+  }
+
+  .el-checkbox__inner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--second-color);
+    border-radius: 2px;
+    background-color: transparent;
+    transition:
+      border-color var(--zg-duration-base) var(--zg-ease-m3-standard),
+      background-color var(--zg-duration-base) var(--zg-ease-m3-standard);
+
+    &::after {
+      top: 1px;
+      left: 4px;
+      width: 4px;
+      height: 8px;
+      border-width: 2px;
+      transition: transform var(--zg-duration-base) var(--zg-ease-m3-standard);
+    }
+  }
+
+  .el-checkbox__input.is-checked .el-checkbox__inner,
+  .el-checkbox__input.is-indeterminate .el-checkbox__inner {
+    border-color: var(--brand-indigo);
+    background-color: var(--brand-indigo);
+  }
+
+  .el-checkbox__input.is-indeterminate .el-checkbox__inner::before {
+    top: 6px;
+    height: 2px;
+    background-color: var(--on-brand);
+  }
+
+  .el-checkbox__input.is-checked + .el-checkbox__label {
+    color: var(--main-color);
+  }
+
+  .el-checkbox__input.is-focus .el-checkbox__inner {
+    border-color: var(--second-color);
+  }
+
+  .el-checkbox__original:focus-visible + .el-checkbox__inner {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+/* ============ 表单弹窗：28px 圆角，标题栏与页脚分割线，缩放进入 ============ */
+.el-dialog.dark-dialog.news-admin-dialog {
+  --el-dialog-padding-primary: 0;
+
+  padding: 0;
+  border: 0;
+  border-radius: var(--zg-radius-2xl);
+  background: var(--dialog-surface);
+  box-shadow: var(--shadow-popup);
+
+  .el-dialog__header {
+    margin: 0;
+    padding: var(--zg-space-2xl) var(--zg-space-2xl) var(--zg-space-xl);
+    border-bottom: 1px solid var(--surface-border);
+
+    .el-dialog__title {
+      color: var(--dialog-title);
+      font-size: var(--zg-text-2xl);
+      line-height: 28px;
+      font-weight: var(--zg-weight-medium);
+      letter-spacing: 0;
+    }
+  }
+
+  .el-dialog__body {
+    max-height: calc(100vh - 220px);
+    padding: 20px var(--zg-space-2xl) var(--zg-space-2xl);
+    overflow-y: auto;
+    color: var(--main-color);
+  }
+
+  .el-dialog__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--zg-space-md);
+    padding: var(--zg-space-xl) var(--zg-space-2xl) 20px;
+    border-top: 1px solid var(--surface-border);
+
+    .el-button + .el-button {
+      margin-left: 0;
+    }
+  }
+
+  /* dark-dialog 预设里的描边式控件换回本档的填充式控件 */
+  .el-form-item__label {
+    color: var(--second-color);
+    font-weight: var(--zg-weight-medium);
+  }
+
+  .el-input__wrapper,
+  .el-select__wrapper {
+    border: 0;
+    background-color: var(--control-bg);
+    box-shadow: 0 0 0 1px var(--control-border) inset !important;
+    color: var(--control-text);
+
+    &:hover {
+      border: 0;
+      background-color: var(--control-bg);
+    }
+
+    &.is-focus,
+    &.is-focused {
+      border: 0;
+      background-color: var(--control-bg);
+      box-shadow: 0 0 0 2px var(--control-focus-border) inset !important;
+    }
+  }
+
+  .el-textarea__inner {
+    border: 0;
+    background-color: var(--control-bg);
+    box-shadow: 0 0 0 1px var(--control-border) inset !important;
+
+    &:hover {
+      border: 0;
+      background-color: var(--control-bg);
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 2px var(--control-focus-border) inset !important;
+    }
+  }
+
+  .el-form-item.is-error .el-input__wrapper,
+  .el-form-item.is-error .el-select__wrapper,
+  .el-form-item.is-error .el-textarea__inner {
+    box-shadow: 0 0 0 1px var(--control-error-border) inset !important;
+  }
+
+  .el-input__inner,
+  .el-textarea__inner,
+  .el-select__selected-item {
+    color: var(--control-text);
+
+    &::placeholder {
+      color: var(--control-placeholder);
+    }
+  }
+
+  .el-switch {
+    --el-switch-off-color: var(--surface-container-highest);
+    --el-switch-on-color: var(--brand-indigo);
+  }
+
+  .el-button:not(.el-button--primary):not(.is-link):not(.btn-primary) {
+    border-color: var(--el-button-border-color);
+    background-color: var(--el-button-bg-color);
+    color: var(--el-button-text-color);
+
+    &:hover {
+      border-color: var(--el-button-border-color);
+      background-color: var(--el-button-bg-color);
+      color: var(--el-button-text-color);
+    }
+  }
+
+  .el-button.is-disabled:not(.el-button--primary):not(.is-link):not(.btn-primary) {
+    border-color: var(--el-button-disabled-border-color);
+    background-color: var(--el-button-disabled-bg-color);
+    color: var(--el-button-disabled-text-color);
+  }
+}
+
+.dialog-fade-enter-active .el-dialog.news-admin-dialog {
+  animation: news-admin-dialog-in 300ms var(--zg-ease-m3-emphasized-decelerate);
+}
+
+@keyframes news-admin-dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ============ 确认弹窗：400px、28px 圆角，按钮为文字按钮 ============ */
+.el-message-box.dark-message-box.news-admin-message-box {
+  width: 400px;
+  padding: var(--zg-space-2xl) var(--zg-space-2xl) 20px;
+  border: 0;
+  border-radius: var(--zg-radius-2xl);
+  animation: news-admin-dialog-in 300ms var(--zg-ease-m3-emphasized-decelerate);
+
+  .el-message-box__header {
+    padding: 0;
+  }
+
+  .el-message-box__title {
+    font-size: var(--zg-text-2xl);
+    line-height: 28px;
+    font-weight: var(--zg-weight-medium);
+  }
+
+  .el-message-box__headerbtn {
+    display: none;
+  }
+
+  .el-message-box__message {
+    padding-top: var(--zg-space-xl);
+
+    p,
+    label {
+      line-height: 20px;
+    }
+  }
+
+  .el-message-box__btns {
+    gap: var(--zg-space-md);
+    padding-top: var(--zg-space-2xl);
+
+    .el-button,
+    .el-button:not(.el-button--primary),
+    .el-button--primary {
+      height: 32px;
+      padding: 0 var(--zg-space-lg);
+      border-radius: var(--zg-radius-pill);
+      background-color: transparent;
+      color: var(--brand-indigo);
+      font-weight: var(--zg-weight-medium);
+
+      &:hover {
+        background-color: transparent;
+        color: var(--brand-indigo);
+        opacity: 1;
+      }
+    }
+
+    .el-button + .el-button {
+      margin-left: 0;
+    }
+  }
+
+  &.is-danger .el-message-box__btns .el-button--primary,
+  &.is-danger .el-message-box__btns .el-button--primary:hover {
+    background-color: transparent;
+    color: var(--status-rejected);
+  }
+}
+
+/* ============ 抽屉（运行记录侧边栏） ============ */
+.el-drawer.news-admin-drawer {
+  border-left: 1px solid var(--surface-border);
+  border-radius: var(--zg-radius-xl) 0 0 var(--zg-radius-xl);
+  background: var(--third-bg-color);
+  box-shadow: var(--shadow-popup);
+  color: var(--main-color);
+
+  .el-drawer__header {
+    height: 56px;
+    margin: 0;
+    padding: 0 var(--zg-space-lg) 0 var(--zg-space-2xl);
+    border-bottom: 1px solid var(--surface-border);
+    color: var(--main-color);
+  }
+
+  .el-drawer__title {
+    font-size: var(--zg-text-lg);
+    line-height: 24px;
+    font-weight: var(--zg-weight-medium);
+  }
+
+  .el-drawer__close-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: var(--second-color);
+    font-size: var(--zg-text-xl);
+
+    &:hover {
+      background: var(--state-layer-hover);
+      color: var(--main-color);
+    }
+  }
+
+  .el-drawer__body {
+    padding: var(--zg-space-md) var(--zg-space-lg) var(--zg-space-2xl);
+  }
+}
+
+/* ============ 下拉与菜单：surface-container 底、4px 圆角、40px 选项 ============ */
+/* dialog-theme.scss 给 el-select 下拉写了带 !important 的全局暗色，这里只能以同等强度在本档覆盖 */
+.el-popper.news-admin-popper,
+.el-popper.el-select__popper.news-admin-popper {
+  padding: 0;
+  border: 0 !important;
+  border-radius: var(--zg-radius-xs) !important;
+  background: var(--surface-container) !important;
+  box-shadow: var(--zg-shadow-m3-2) !important;
+
+  .el-popper__arrow {
+    display: none;
+  }
+
+  .el-select-dropdown__list,
+  .el-dropdown-menu {
+    --el-dropdown-menuItem-hover-fill: var(--state-layer-hover);
+    --el-dropdown-menuItem-hover-color: var(--main-color);
+
+    padding: var(--zg-space-md) 0;
+    background: transparent;
+  }
+
+  .el-select-dropdown__item {
+    height: 40px;
+    padding: 0 var(--zg-space-lg);
+    color: var(--main-color);
+    font-size: var(--zg-text-base);
+    line-height: 40px;
+    font-weight: var(--zg-weight-regular);
+
+    &.is-hovering,
+    &:hover {
+      background-color: var(--state-layer-hover);
+      color: var(--main-color);
+    }
+
+    &.is-selected {
+      background-color: var(--selected-bg);
+      color: var(--selected-text);
+      font-weight: var(--zg-weight-regular);
+    }
+  }
+
+  .el-dropdown-menu__item {
+    display: flex;
+    align-items: center;
+    gap: var(--zg-space-lg);
+    height: 40px;
+    padding: 0 var(--zg-space-xl) 0 var(--zg-space-lg);
+    color: var(--main-color);
+    font-size: var(--zg-text-base);
+    line-height: 40px;
+
+    .svg-icon,
+    svg {
+      color: var(--second-color);
+    }
+  }
+}
+
+/* ============ 消息：底部提示条（反相表面、4px 圆角、上浮） ============ */
+.el-message.news-admin-message {
+  --el-message-bg-color: var(--snackbar-bg);
+  --el-message-border-color: transparent;
+  --el-message-text-color: var(--snackbar-text);
+
+  gap: var(--zg-space-md);
+  min-height: 48px;
+  max-width: calc(100vw - 32px);
+  padding: 14px var(--zg-space-xl);
+  border: 0;
+  border-radius: var(--zg-radius-xs);
+  box-shadow: var(--zg-shadow-m3-3);
+
+  .el-message__icon {
+    display: none;
+  }
+
+  .el-message__content {
+    color: var(--snackbar-text);
+    font-size: var(--zg-text-base);
+    line-height: 20px;
+  }
+
+  .el-message__closeBtn {
+    color: var(--snackbar-text);
+  }
+}
+
+/* ============ 日期范围选择器（时间筛选的自定义区间）：surface-container 面板、12px 圆角，起止日主色实底 ============ */
+/* dialog-theme.scss 给 .el-popper.el-picker__popper 写了带 !important 的全局暗色，这里多带一个类名稳定压过 */
+.el-popper.el-picker__popper.news-admin-popper {
+  --el-bg-color-overlay: var(--surface-container);
+
+  border: 0 !important;
+  border-radius: var(--zg-radius-lg) !important;
+  background: var(--surface-container) !important;
+  box-shadow: var(--zg-shadow-m3-2) !important;
+
+  /* Element 把 --el-datepicker-* 定义在面板上，变量必须写在面板选择器上才生效 */
+  .el-picker-panel,
+  .el-date-range-picker {
+    --el-datepicker-text-color: var(--main-color);
+    --el-datepicker-off-text-color: var(--text-disabled);
+    --el-datepicker-header-text-color: var(--main-color);
+    --el-datepicker-icon-color: var(--second-color);
+    --el-datepicker-border-color: var(--surface-border);
+    --el-datepicker-inner-border-color: var(--surface-border);
+    --el-datepicker-inrange-bg-color: var(--selected-bg);
+    --el-datepicker-inrange-hover-bg-color: var(--selected-bg);
+    --el-datepicker-active-color: var(--brand-indigo);
+    --el-datepicker-hover-text-color: var(--brand-indigo);
+    --el-datepicker-bg-color: var(--surface-container);
+
+    border-radius: var(--zg-radius-lg);
+    background: transparent;
+    color: var(--main-color);
+  }
+
+  .el-date-range-picker__header {
+    font-size: var(--zg-text-base);
+    font-weight: var(--zg-weight-medium);
+  }
+
+  .el-date-range-picker__content.is-left {
+    border-right-color: var(--surface-border);
+  }
+
+  .el-picker-panel__icon-btn {
+    color: var(--second-color);
+
+    &:hover {
+      color: var(--brand-indigo);
+    }
+  }
+
+  .el-date-table th {
+    border-bottom-color: var(--surface-border);
+    color: var(--second-color);
+    font-weight: var(--zg-weight-regular);
+  }
+
+  .el-date-table td.today .el-date-table-cell__text {
+    color: var(--brand-indigo);
+  }
+
+  /* 主色实底上的文字用 on-primary，替换 Element 写死的白字 */
+  .el-date-table td.start-date .el-date-table-cell,
+  .el-date-table td.end-date .el-date-table-cell,
+  .el-date-table td.start-date .el-date-table-cell__text,
+  .el-date-table td.end-date .el-date-table-cell__text,
+  .el-date-table td.current:not(.disabled) .el-date-table-cell__text {
+    color: var(--on-brand);
+  }
+
+  .el-date-table td.in-range .el-date-table-cell {
+    color: var(--selected-text);
+  }
+}

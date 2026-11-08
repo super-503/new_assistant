@@ -1,0 +1,51 @@
+server:
+  address: ${NEWS_BIND_ADDRESS:127.0.0.1}
+  port: ${NEWS_PORT:8091}
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+
+spring:
+  application:
+    name: news-recommendation-assistant
+  datasource:
+    url: 'jdbc:mysql://106.52.72.159:3307/news_assistant?serverTimezone=Asia/Shanghai'
+    username: root
+    password: '!yuanke123'
+  redis:
+    host: 106.52.72.159
+    port: 6379
+    password: '698b96ba34283bb3fbddbd99d090b0276adeb0d446e757f9'
+    database: 0
+  security:
+    user:
+      name: admin
+      password: ''
+      roles: SUPER_ADMIN
+  jackson:
+    time-zone: Asia/Shanghai
+
+mybatis:
+  mapper-locations: classpath*:mapper/ai/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+pagehelper:
+  helper-dialect: mysql
+
+news:
+  admin-url: '${NEWS_ADMIN_URL:http://localhost:8091/#/news-admin/channels}'
+  pull-cron: '${NEWS_PULL_CRON:0 0 8,20 * * *}'
+  time-zone: ${NEWS_TIME_ZONE:Asia/Shanghai}
+  model: ${NEWS_MODEL:}
+  model-url: ${NEWS_MODEL_URL:}
+  model-api-key: ${NEWS_MODEL_API_KEY:}
+  feishu-webhook: ${NEWS_FEISHU_WEBHOOK:}
+  digest-feishu-webhook: ${NEWS_DIGEST_FEISHU_WEBHOOK:}
+  digest-cron: '${NEWS_DIGEST_CRON:0 5 21 * * *}'
+  job-family-enabled: ${NEWS_JOB_FAMILY_ENABLED:false}
+  sync-job-families: ${NEWS_SYNC_JOB_FAMILIES:false}
+  x:
+    proxy-host: ${NEWS_X_PROXY_HOST:}
+    proxy-port: ${NEWS_X_PROXY_PORT:8080}

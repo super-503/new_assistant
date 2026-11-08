@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zengame.ai.repository.ai.mapper.NewsItemLogMapper">
+
+    <sql id="BaseColumnList">
+        id,
+        item_id AS itemId,
+        action,
+        operator,
+        detail_json AS detailJson,
+        create_time AS createTime
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO news_item_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            item_id,
+            action,
+            operator,
+            detail_json,
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            #{itemId},
+            #{action},
+            #{operator},
+            #{detailJson},
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <select id="selectById" resultType="com.zengame.ai.repository.ai.po.NewsItemLogPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_item_log
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByItemId" resultType="com.zengame.ai.repository.ai.po.NewsItemLogPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_item_log
+        WHERE item_id = #{itemId}
+        ORDER BY id
+    </select>
+</mapper>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zengame.ai.repository.ai.mapper.NewsAiFieldMapper">
+
+    <sql id="BaseColumnList">
+        id,
+        field_key AS fieldKey,
+        name,
+        kind,
+        source,
+        output_type AS outputType,
+        multiline,
+        options_json AS optionsJson,
+        show_as_tag AS showAsTag,
+        prompt,
+        required,
+        editable,
+        enabled,
+        article_only AS articleOnly,
+        sort_no AS sortNo,
+        create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO news_ai_field
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            field_key,
+            name,
+            <if test="kind != null">kind,</if>
+            source,
+            output_type,
+            <if test="multiline != null">multiline,</if>
+            <if test="optionsJson != null">options_json,</if>
+            <if test="showAsTag != null">show_as_tag,</if>
+            prompt,
+            <if test="required != null">required,</if>
+            <if test="editable != null">editable,</if>
+            <if test="enabled != null">enabled,</if>
+            <if test="articleOnly != null">article_only,</if>
+            <if test="sortNo != null">sort_no,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            #{fieldKey},
+            #{name},
+            <if test="kind != null">#{kind},</if>
+            #{source},
+            #{outputType},
+            <if test="multiline != null">#{multiline},</if>
+            <if test="optionsJson != null">#{optionsJson},</if>
+            <if test="showAsTag != null">#{showAsTag},</if>
+            #{prompt},
+            <if test="required != null">#{required},</if>
+            <if test="editable != null">#{editable},</if>
+            <if test="enabled != null">#{enabled},</if>
+            <if test="articleOnly != null">#{articleOnly},</if>
+            <if test="sortNo != null">#{sortNo},</if>
+        </trim>
+    </insert>
+
+    <select id="selectById" resultType="com.zengame.ai.repository.ai.po.NewsAiFieldPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_ai_field
+        WHERE id = #{id}
+    </select>
+
+    <update id="updateById">
+        UPDATE news_ai_field
+        SET field_key    = #{fieldKey},
+            name         = #{name},
+            source       = #{source},
+            output_type  = #{outputType},
+            multiline    = #{multiline},
+            options_json = #{optionsJson},
+            show_as_tag  = #{showAsTag},
+            prompt       = #{prompt},
+            required     = #{required},
+            editable     = #{editable},
+            enabled      = #{enabled},
+            article_only = #{articleOnly},
+            sort_no      = #{sortNo}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateSortNo">
+        UPDATE news_ai_field
+        SET sort_no = #{sortNo}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectByFieldKey" resultType="com.zengame.ai.repository.ai.po.NewsAiFieldPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_ai_field
+        WHERE field_key = #{fieldKey}
+    </select>
+
+    <select id="selectAll" resultType="com.zengame.ai.repository.ai.po.NewsAiFieldPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_ai_field
+        ORDER BY sort_no, id
+    </select>
+
+    <select id="selectEnabled" resultType="com.zengame.ai.repository.ai.po.NewsAiFieldPO">
+        SELECT <include refid="BaseColumnList"/>
+        FROM news_ai_field
+        WHERE enabled = 1
+        ORDER BY sort_no, id
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM news_ai_field
+        WHERE id = #{id}
+    </delete>
+</mapper>

@@ -1,0 +1,238 @@
+// 资讯中心组件共用的交互配方：状态层、涟漪、聚焦框与几类按钮的基础形态
+
+@mixin reset-button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+@mixin focus-ring($offset: 2px) {
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: $offset;
+  }
+}
+
+/* 悬停状态层（currentColor 8%）+ 按下涟漪 */
+@mixin state-layer {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--zg-duration-base) var(--zg-ease-m3-standard);
+  }
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: -1;
+    width: max(100%, 40px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(2.2);
+    transition:
+      transform 550ms var(--zg-ease-m3-standard),
+      opacity 550ms var(--zg-ease-m3-standard);
+  }
+  &:hover::before {
+    opacity: 0.08;
+  }
+  &:focus-visible::before,
+  &:active::before {
+    opacity: 0.1;
+  }
+  &:active::after {
+    opacity: 0.14;
+    transform: translate(-50%, -50%) scale(0);
+    transition: 0s;
+  }
+  &:disabled::before,
+  &:disabled::after {
+    display: none;
+  }
+}
+
+/* 圆形图标按钮 */
+@mixin icon-button($size: 32px) {
+  @include reset-button;
+  @include state-layer;
+  @include focus-ring;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: $size;
+  height: $size;
+  border-radius: 50%;
+  color: var(--second-color);
+
+  :deep(.svg-icon) {
+    cursor: inherit;
+  }
+}
+
+/* 主色文字按钮 */
+@mixin text-button {
+  @include reset-button;
+  @include state-layer;
+  @include focus-ring;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--zg-space-lg);
+  border-radius: var(--zg-radius-pill);
+  color: var(--brand-indigo);
+  font-size: var(--zg-text-base);
+  font-weight: var(--zg-weight-medium);
+  letter-spacing: 0.1px;
+  text-decoration: none;
+}
+
+/* 中性底色的胶囊按钮：卡片上的通过 / 拒绝 / 恢复 */
+@mixin tonal-pill($bg: var(--surface-container-high)) {
+  @include reset-button;
+  @include state-layer;
+  @include focus-ring;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--zg-space-sm);
+  height: 32px;
+  padding: 0 14px 0 10px;
+  border-radius: var(--zg-radius-pill);
+  background: $bg;
+  color: var(--main-color);
+  font-size: var(--zg-text-md);
+  font-weight: var(--zg-weight-medium);
+  text-decoration: none;
+
+  :deep(.svg-icon) {
+    cursor: inherit;
+  }
+}
+
+/*
+ * 筛选 chip 的整套样式（在样式块根部引入）：28px 描边 chip，选中态为选中底色并弹出对勾；
+ * 下拉选项前留对勾位，选中项显示对勾。NewsFilterChip 与 NewsTimeFilterChip 共用。
+ */
+@mixin filter-chip-styles {
+  .filter-chip {
+    @include reset-button;
+    @include state-layer;
+    @include focus-ring(1px);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zg-space-xs);
+    height: 28px;
+    padding: 0 var(--zg-space-sm) 0 var(--zg-space-lg);
+    border: 1px solid var(--surface-outline);
+    border-radius: var(--zg-radius-md);
+    color: var(--second-color);
+    font-size: var(--zg-text-md);
+    font-weight: var(--zg-weight-medium);
+    transition:
+      background var(--zg-duration-base) var(--zg-ease-m3-standard),
+      padding var(--zg-duration-base) var(--zg-ease-m3-standard);
+
+    &.is-active {
+      padding-left: var(--zg-space-md);
+      border-color: transparent;
+      background: var(--selected-bg);
+      color: var(--selected-text);
+    }
+
+    :deep(.svg-icon) {
+      flex: none;
+      cursor: inherit;
+    }
+  }
+
+  .chip-check {
+    animation: news-pop var(--zg-duration-base) var(--zg-ease-m3-standard);
+  }
+
+  .chip-text {
+    max-width: 128px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chip-arrow {
+    color: var(--second-color);
+  }
+
+  .chip-option {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zg-space-md);
+
+    .option-check {
+      visibility: hidden;
+      color: var(--brand-indigo);
+    }
+    &.is-selected .option-check {
+      visibility: visible;
+    }
+  }
+
+  @keyframes news-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* 次要实底按钮：保存修改、恢复到待审 */
+@mixin selected-button {
+  @include reset-button;
+  @include state-layer;
+  @include focus-ring;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--zg-space-md);
+  height: 32px;
+  padding: 0 var(--zg-space-xl);
+  border-radius: var(--zg-radius-pill);
+  background: var(--selected-bg);
+  color: var(--selected-text);
+  font-size: var(--zg-text-base);
+  font-weight: var(--zg-weight-medium);
+  transition: transform var(--zg-duration-fast) var(--zg-ease-m3-standard);
+
+  &:active {
+    transform: scale(0.97);
+  }
+  &:disabled {
+    background: var(--surface-container-highest);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+    transform: none;
+  }
+}

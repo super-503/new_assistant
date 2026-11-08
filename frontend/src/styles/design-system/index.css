@@ -1,0 +1,11 @@
+/**
+ * 设计系统入口。三层结构：
+ *   primitives.css  第 1 层 原语 —— 原始取值的唯一定义处，与主题无关
+ *   semantic.css    第 2 层 语义 —— 按用途命名，业务组件唯一应引用的一层
+ *   第 3 层 组件 token —— 不在此文件，随组件就近定义（见 MASTER.md）
+ *
+ * 由 src/main.ts 在页面样式之前引入。
+ * 页面规范见 frontend/design-system/pages/news-admin.md
+ */
+@import './primitives.css';
+@import './semantic.css';

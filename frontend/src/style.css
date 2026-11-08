@@ -1,0 +1,16 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, 'Microsoft YaHei', sans-serif;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}

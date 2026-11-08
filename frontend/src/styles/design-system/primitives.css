@@ -1,0 +1,253 @@
+/**
+ * 设计系统 · 第 1 层：原语（primitive）
+ *
+ * 原始取值的唯一定义处，不含任何语义。与主题无关：明暗两套皮肤都从这里取色。
+ * 取值全部来自现有代码的实际用量，不是新造的色板。
+ *
+ * 约束：业务组件禁止直接使用 --zg-*，只能用 semantic.css 里的语义 token。
+ *      在组件里看到 --zg- 前缀，即为越层，应改为语义 token 或补一个语义 token。
+ */
+
+:root {
+  /* ============ 中性色阶 ============ */
+  /* 由深到浅，值取自代码中出现频次最高的灰阶 */
+  --zg-gray-1000: #000000;
+  --zg-gray-950: #0a0a0a;
+  --zg-gray-900: #141414;
+  --zg-gray-870: #1a1a1a;
+  --zg-gray-850: #1b1c21;
+  --zg-gray-800: #23252c;
+  --zg-gray-750: #292b33;
+  --zg-gray-700: #2c3137;
+  --zg-gray-680: #2e2e33;
+  --zg-gray-650: #2f333b;
+  --zg-gray-600: #4e535c;
+  --zg-gray-550: #595959;
+  --zg-gray-500: #787d82;
+  --zg-gray-450: #838383;
+  --zg-gray-400: #8c8c8c;
+  --zg-gray-350: #999999;
+  --zg-gray-300: #cccccc;
+  --zg-gray-260: #c0bdbd;
+  --zg-gray-250: #dddddd;
+  --zg-gray-200: #e1e1e1;
+  --zg-gray-150: #e0e0e0;
+  --zg-gray-100: #f5f5f5;
+  --zg-gray-0: #ffffff;
+
+  /* ============ 品牌色 ============ */
+  /* 靛蓝：产品主色。#3e66ef 在白底对比度约 5.4:1，达 WCAG AA */
+  --zg-indigo-400: #7a96ff;
+  --zg-indigo-500: #3e66ef;
+  --zg-indigo-600: #2947b8;
+
+  /* 紫：与靛蓝构成渐变的第二品牌色 */
+  --zg-violet-400: #b78dff;
+  --zg-violet-500: #8a4fff;
+  --zg-violet-600: #6b32d6;
+
+  /* 蓝：费用/管控页专用主色。这类页面有相邻分类需要区分，
+     靛蓝→紫渐变两端色差过小（常视 ΔE 11.1、protan ΔE 1.8）不可用，故单独取色 */
+  --zg-blue-500: #3987e5;
+
+  /* ============ 状态色 ============ */
+  --zg-green-400: #2dd4a7;
+  --zg-green-500: #3fae87;
+  --zg-green-600: #0f9d60;
+  /* 「纳入 / 通过」类块填充的绿，产品指定色；与上面的 green 状态色阶取值不同，不要互相替换 */
+  --zg-leaf-500: #2a9d62;
+  --zg-amber-400: #f7bd54;
+  --zg-amber-500: #d9a441;
+  --zg-amber-600: #b47708;
+  --zg-red-400: #f17878;
+  --zg-red-500: #e06c6c;
+  --zg-cyan-400: #67e8f9;
+  --zg-cyan-500: #06b6d4;
+  --zg-cyan-600: #0e7490;
+
+  /* ============ 透明叠加层 ============ */
+  /* 描边、控件底色等叠加在表面上的半透明层，暗底用白、亮底用黑 */
+  --zg-alpha-white-04: rgba(255, 255, 255, 0.04);
+  --zg-alpha-white-06: rgba(255, 255, 255, 0.06);
+  --zg-alpha-white-07: rgba(255, 255, 255, 0.07);
+  --zg-alpha-white-08: rgba(255, 255, 255, 0.08);
+  --zg-alpha-white-10: rgba(255, 255, 255, 0.1);
+  --zg-alpha-white-92: rgba(255, 255, 255, 0.92);
+  --zg-alpha-black-03: rgba(0, 0, 0, 0.03);
+  --zg-alpha-black-09: rgba(0, 0, 0, 0.09);
+  --zg-alpha-black-12: rgba(0, 0, 0, 0.12);
+  --zg-alpha-black-60: rgba(0, 0, 0, 0.6);
+
+  /* 品牌色透明档：标签底 10~15%、描边 30~35%、hover 描边 40~50% */
+  --zg-indigo-a10: rgba(62, 102, 239, 0.1);
+  --zg-indigo-a15: rgba(62, 102, 239, 0.15);
+  --zg-indigo-a18: rgba(62, 102, 239, 0.18);
+  --zg-indigo-a25: rgba(62, 102, 239, 0.25);
+  --zg-indigo-a30: rgba(62, 102, 239, 0.3);
+  --zg-violet-a10: rgba(138, 79, 255, 0.1);
+  --zg-violet-a15: rgba(138, 79, 255, 0.15);
+  --zg-violet-a30: rgba(138, 79, 255, 0.3);
+  --zg-violet-a35: rgba(138, 79, 255, 0.35);
+  --zg-violet-a40: rgba(138, 79, 255, 0.4);
+  --zg-violet-a50: rgba(138, 79, 255, 0.5);
+  --zg-blue-a15: rgba(57, 135, 229, 0.15);
+  --zg-blue-a25: rgba(57, 135, 229, 0.25);
+  --zg-blue-a50: rgba(57, 135, 229, 0.5);
+  --zg-cyan-a10: rgba(6, 182, 212, 0.1);
+  --zg-cyan-a12: rgba(6, 182, 212, 0.12);
+  --zg-cyan-a32: rgba(6, 182, 212, 0.32);
+  --zg-cyan-a35: rgba(6, 182, 212, 0.35);
+  --zg-amber-a14: rgba(247, 189, 84, 0.14);
+  --zg-amber-a35: rgba(247, 189, 84, 0.35);
+  --zg-amber-a36: rgba(247, 189, 84, 0.36);
+
+  /* ============ M3 暗色方案（资讯中心） ============ */
+  /* Material Design 3 暗色方案，种子色为品牌蓝 #3e66ef，取值见 docs/资讯系统/设计文档.md 第 9 章 */
+  --zg-m3-primary: #b4c5ff;
+  --zg-m3-on-primary: #00297a;
+  --zg-m3-primary-container: #2c4aad;
+  --zg-m3-on-primary-container: #dce1ff;
+  --zg-m3-secondary: #bec6dc;
+  --zg-m3-secondary-container: #3e4759;
+  --zg-m3-on-secondary-container: #dae2f9;
+  --zg-m3-error: #ffb4ab;
+  --zg-m3-on-error: #690005;
+  --zg-m3-error-container: #93000a;
+  --zg-m3-on-error-container: #ffdad6;
+  --zg-m3-success: #86d79e;
+  --zg-m3-success-container: #005228;
+  --zg-m3-on-success-container: #a2f4b8;
+  --zg-m3-warning: #f0bf5a;
+  --zg-m3-warning-container: #5a4300;
+  --zg-m3-on-warning-container: #ffdea4;
+  --zg-m3-surface: #111318;
+  --zg-m3-surface-container-low: #191b20;
+  --zg-m3-surface-container: #1d2024;
+  --zg-m3-surface-container-high: #282a2f;
+  --zg-m3-surface-container-highest: #33353a;
+  --zg-m3-on-surface: #e2e2e9;
+  --zg-m3-on-surface-variant: #c4c6d0;
+  --zg-m3-outline: #8e9099;
+  --zg-m3-outline-variant: #44474f;
+  --zg-m3-inverse-on-surface: #2e3036;
+  --zg-m3-inverse-primary: #3d5ba9;
+  /* 状态层与禁用态：on-surface / primary 的透明档 */
+  --zg-m3-on-surface-a04: rgba(226, 226, 233, 0.04);
+  --zg-m3-on-surface-a08: rgba(226, 226, 233, 0.08);
+  --zg-m3-on-surface-a12: rgba(226, 226, 233, 0.12);
+  --zg-m3-on-surface-a38: rgba(226, 226, 233, 0.38);
+  --zg-m3-primary-a06: rgba(180, 197, 255, 0.06);
+  --zg-m3-primary-a16: rgba(180, 197, 255, 0.16);
+
+  /* ============ 标签循环配色（资讯中心） ============ */
+  /* 「显示为标签」的字段按选项顺序循环取用，底色 / 文字成对使用 */
+  --zg-tag-1-bg: #1d2d55;
+  --zg-tag-1-text: #a9c1ff;
+  --zg-tag-2-bg: #2a2560;
+  --zg-tag-2-text: #c3b8ff;
+  --zg-tag-3-bg: #3b2152;
+  --zg-tag-3-text: #e2b6ff;
+  --zg-tag-4-bg: #43301a;
+  --zg-tag-4-text: #f3c48a;
+  --zg-tag-5-bg: #183c36;
+  --zg-tag-5-text: #8fe0cf;
+
+  /* ============ 局部表面色 ============ */
+  /* 使用面很窄、未并入上面的色阶；新代码优先用中性色阶，这里只保证它们有唯一定义处 */
+  --zg-surface-chat-user: #f0f2f5;
+  --zg-surface-chat-card: #f0f0f0;
+  --zg-surface-menu-hover: #ecf5ff;
+  --zg-surface-raised-light: #fcfcfc;
+  --zg-border-pre: #eeeeee;
+  --zg-scroll-light: #c1c1c1;
+  /* 暗色首页图标：gray-400 带约 77% alpha */
+  --zg-icon-home-dark: #8c8c8cc4;
+  --zg-amber-700: #92610a;
+
+  /* Element Plus 默认文字/占位色，控件 token 与之对齐，避免浅色表单看起来是两套 */
+  --zg-ep-text: #303133;
+  --zg-ep-placeholder: #a8abb2;
+
+  /* ============ 间距 ============ */
+  /* 4px 节奏，dashboard 密度。10px / 14px 是历史遗留值，新代码向 8/12、12/16 收敛 */
+  --zg-space-2xs: 2px;
+  --zg-space-xs: 4px;
+  --zg-space-sm: 6px;
+  --zg-space-md: 8px;
+  --zg-space-lg: 12px;
+  --zg-space-xl: 16px;
+  --zg-space-2xl: 24px;
+  --zg-space-3xl: 32px;
+
+  /* ============ 字号 ============ */
+  /* base = 14px，是全站正文字号（代码中 297 处，占绝对多数） */
+  --zg-text-2xs: 10px;
+  --zg-text-xs: 11px;
+  --zg-text-sm: 12px;
+  --zg-text-md: 13px;
+  --zg-text-base: 14px;
+  --zg-text-lg: 16px;
+  --zg-text-xl: 18px;
+  --zg-text-2xl: 20px;
+  --zg-text-3xl: 24px;
+  --zg-text-4xl: 30px;
+  --zg-text-5xl: 36px;
+
+  /* ============ 字重 / 行高 ============ */
+  --zg-weight-regular: 400;
+  --zg-weight-medium: 500;
+  --zg-weight-semibold: 600;
+  --zg-weight-bold: 700;
+
+  --zg-leading-tight: 1.2;
+  --zg-leading-normal: 1.5;
+  --zg-leading-relaxed: 1.6;
+
+  /* ============ 圆角 ============ */
+  /* md = 8px 是全站默认（411 处）。2/3px 归入 xs，10px 归入 md 或 lg */
+  --zg-radius-xs: 4px;
+  --zg-radius-sm: 6px;
+  --zg-radius-md: 8px;
+  --zg-radius-lg: 12px;
+  --zg-radius-xl: 16px;
+  /* M3 弹窗圆角，只用于资讯中心的弹窗 */
+  --zg-radius-2xl: 28px;
+  --zg-radius-pill: 999px;
+
+  /* ============ 阴影 ============ */
+  --zg-shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --zg-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.2);
+  --zg-shadow-lg-light: 0 12px 32px rgba(0, 0, 0, 0.1);
+  --zg-shadow-lg-dark: 0 12px 32px rgba(0, 0, 0, 0.35);
+  --zg-shadow-drawer: -24px 0 48px rgba(0, 0, 0, 0.45);
+  /* M3 elevation 1 / 2 / 3：卡片悬停 / 菜单 / 弹窗与消息条 */
+  --zg-shadow-m3-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+  --zg-shadow-m3-2: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
+  --zg-shadow-m3-3: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 8px 3px rgba(0, 0, 0, 0.15);
+
+  /* ============ 动效 ============ */
+  --zg-duration-fast: 0.15s;
+  --zg-duration-base: 0.2s;
+  --zg-duration-slow: 0.3s;
+  --zg-ease-standard: ease;
+  --zg-ease-in-out: ease-in-out;
+  /* M3 缓动：standard 用于状态变化，emphasized decelerate 用于进场，emphasized accelerate 用于离场 */
+  --zg-ease-m3-standard: cubic-bezier(0.2, 0, 0, 1);
+  --zg-ease-m3-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --zg-ease-m3-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+
+  /* ============ 控件尺寸 ============ */
+  /* 筛选框、工具按钮、页头胶囊共用一个高度 */
+  --zg-control-height: 32px;
+
+  /* ============ 层级 ============ */
+  /* 仅供新代码使用。现有代码存在 3000/3030/3100/9999/10000 等散值，
+     迁移时以一个层叠上下文为单位整体替换，不要逐个改 */
+  --zg-z-raised: 1;
+  --zg-z-sticky: 10;
+  --zg-z-dropdown: 100;
+  --zg-z-drawer: 1000;
+  --zg-z-modal: 2000;
+  --zg-z-popover: 3000;
+  --zg-z-message: 9000;
+}

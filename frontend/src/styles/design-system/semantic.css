@@ -1,0 +1,503 @@
+/**
+ * 设计系统 · 第 2 层：语义（semantic）
+ *
+ * 按用途命名的 token，是业务组件唯一应该引用的一层。取值一律从 primitives.css 取，
+ * 本层不出现字面量颜色（少数第三方对齐值除外，已在 primitives 里单独定义）。
+ *
+ * 皮肤分五档，后者覆盖前者：
+ *   :root          浅色（默认）
+ *   .dark          暗色，跟随 themeStore
+ *   恒定暗色页面    无视全局主题，始终暗色（费用 / 订阅 / 管控等后台页）
+ *   靛蓝单色皮肤    上一档之上再换品牌色，用于相邻分类需要区分的费用类页面
+ *   资讯中心皮肤    M3 暗色方案，无视全局主题始终暗色
+ */
+
+/* ============================================================
+   浅色（默认）
+   ============================================================ */
+:root {
+  /* --- 表面 --- */
+  --main-bg-color: var(--zg-gray-100);
+  --second-bg-color: var(--zg-gray-0);
+  --third-bg-color: var(--zg-surface-raised-light);
+  --hover-color: var(--zg-gray-200);
+  --ai-hover-color: var(--zg-gray-100);
+
+  /* --- 文字 --- */
+  --main-color: var(--zg-gray-1000);
+  --second-color: var(--zg-gray-450);
+  --ai-icon-color: var(--zg-gray-550);
+  --home-icon: var(--zg-gray-1000);
+
+  /* --- 描边 / 阴影 --- */
+  --surface-border: var(--zg-alpha-black-09);
+  --surface-hover-border: var(--zg-violet-a35);
+  --surface-hover-shadow: var(--zg-shadow-lg-light);
+
+  /* 浮层阴影。抽屉与消息条挂在 body 上、始终浮在暗色页面之上，
+     两个主题取同一档，不随 .dark 变化 */
+  --shadow-drawer: var(--zg-shadow-drawer);
+  --shadow-popup: var(--zg-shadow-lg-dark);
+
+  /* --- 品牌 --- */
+  /* 强调色两主题共用（#3e66ef 在白底对比度约 5.4:1，达 AA）；
+     表面/描边/阴影按主题分别取值，避免暗色配方套到浅色上 */
+  --brand-indigo: var(--zg-indigo-500);
+  --brand-violet: var(--zg-violet-500);
+  --brand-gradient: linear-gradient(135deg, var(--zg-indigo-500) 0%, var(--zg-violet-500) 100%);
+  --brand-bar: linear-gradient(180deg, var(--zg-indigo-500) 0%, var(--zg-violet-500) 100%);
+  --brand-glow: 0 8px 24px var(--zg-indigo-a18);
+
+  /* --- 语义标签：底 + 同色描边 + 深色文字（浅色主题需压暗文字保对比度） --- */
+  --tag-blue-bg: var(--zg-indigo-a10);
+  --tag-blue-border: var(--zg-indigo-a30);
+  --tag-blue-text: var(--zg-indigo-600);
+  --tag-violet-bg: var(--zg-violet-a10);
+  --tag-violet-border: var(--zg-violet-a30);
+  --tag-violet-text: var(--zg-violet-600);
+  --tag-cyan-bg: var(--zg-cyan-a10);
+  --tag-cyan-border: var(--zg-cyan-a32);
+  --tag-cyan-text: var(--zg-cyan-600);
+  --tag-amber-bg: var(--zg-amber-a14);
+  --tag-amber-border: var(--zg-amber-a36);
+  --tag-amber-text: var(--zg-amber-700);
+
+  /* --- 实底填充 --- */
+  /* 绿：「纳入 / 通过」类的块填充，各档皮肤共用。这个绿底上白字对比度不足 4.5:1，配深色字 */
+  --fill-green-bg: var(--zg-leaf-500);
+  --fill-green-text: var(--zg-gray-950);
+
+  /* --- 审核状态 --- */
+  --status-approved: var(--zg-green-600);
+  --status-pending: var(--zg-amber-600);
+
+  /* --- 弹窗：确认框 / 表单弹窗共用的外壳与按钮对 --- */
+  --dialog-surface: var(--zg-gray-0);
+  --dialog-title: var(--zg-gray-1000);
+  --dialog-text: var(--zg-gray-450);
+  /* 次按钮（取消）：低对比填充，不抢主按钮 */
+  --dialog-btn-bg: var(--zg-gray-100);
+  --dialog-btn-text: var(--zg-gray-550);
+  --dialog-btn-hover-bg: var(--zg-gray-200);
+  /* 主按钮：与页面底色反相的实心块，弹窗里最重的一处 */
+  --dialog-primary-bg: var(--zg-gray-1000);
+  --dialog-primary-text: var(--zg-gray-0);
+  --dialog-danger-bg: var(--zg-red-500);
+  --dialog-danger-text: var(--zg-gray-0);
+
+  /* --- 表单控件（筛选框 / 日期选择器）--- */
+  --control-bg: var(--zg-alpha-black-03);
+  --control-border: var(--zg-alpha-black-12);
+  --control-hover-border: var(--zg-violet-a50);
+  --control-focus-border: var(--zg-violet-500);
+  --control-text: var(--zg-ep-text);
+  --control-placeholder: var(--zg-ep-placeholder);
+  --control-height: var(--zg-control-height);
+
+  /* --- 聊天区 --- */
+  --xmd-bg-color: var(--zg-gray-200);
+  --xmd-color: var(--zg-gray-1000);
+  --xmd-user-chat-bg-color: var(--zg-surface-chat-user);
+  --xmd-ai-pre-border-color: var(--zg-border-pre);
+  --xinput-upload-bg-color: var(--zg-gray-0);
+  --xinput-upload-border-color: var(--zg-gray-0);
+  --xinput-upload-file-card-bg: var(--zg-surface-chat-card);
+  --message-bg: inherit;
+
+  /* --- 首页下拉菜单 --- */
+  --home-dropdown-menu-bg: var(--zg-gray-0);
+  --home-dropdown-menu-item-hover-bg: var(--zg-surface-menu-hover);
+
+  /* --- 滚动条 --- */
+  --content-scroll-color: var(--zg-scroll-light);
+  --scroll-track-color: var(--zg-gray-100);
+
+  /* --- 明确的浅色取值，供需要固定浅色的局部使用 --- */
+  --light-main-color: var(--zg-gray-1000);
+  --light-second-color: var(--zg-gray-450);
+
+  /* --- 深色弹层（effect="dark" 的 popover）里的菜单项，弹层恒为深色，与主题无关 --- */
+  --dark-popover-text: var(--zg-gray-0);
+  --dark-popover-item-hover-bg: var(--zg-alpha-white-08);
+
+  /* --- 媒体浮层：压在图片 / 视频画面上的标识，与主题无关 --- */
+  --media-overlay-scrim: var(--zg-alpha-black-60);
+  --media-overlay-text: var(--zg-alpha-white-92);
+  /* 播放区 / 视频的底色，与主题无关 */
+  --media-backdrop: var(--zg-gray-1000);
+}
+
+/* ============================================================
+   暗色（跟随 themeStore 切换 .dark）
+   ============================================================ */
+.dark {
+  --main-bg-color: var(--zg-gray-850);
+  --second-bg-color: var(--zg-gray-1000);
+  --third-bg-color: var(--zg-gray-800);
+  --hover-color: var(--zg-gray-700);
+  --ai-hover-color: var(--zg-gray-650);
+
+  --main-color: var(--zg-gray-0);
+  --second-color: var(--zg-gray-400);
+  --ai-icon-color: var(--zg-gray-260);
+  --home-icon: var(--zg-icon-home-dark);
+
+  --surface-border: var(--zg-alpha-white-08);
+  --surface-hover-border: var(--zg-violet-a40);
+  --surface-hover-shadow: var(--zg-shadow-lg-dark);
+
+  --brand-glow: 0 8px 24px var(--zg-indigo-a25);
+
+  /* 暗底上文字需提亮，底/描边 alpha 同步抬高 */
+  --tag-blue-bg: var(--zg-indigo-a15);
+  --tag-blue-border: var(--zg-indigo-a30);
+  --tag-blue-text: var(--zg-indigo-400);
+  --tag-violet-bg: var(--zg-violet-a15);
+  --tag-violet-border: var(--zg-violet-a30);
+  --tag-violet-text: var(--zg-violet-400);
+  --tag-cyan-bg: var(--zg-cyan-a12);
+  --tag-cyan-border: var(--zg-cyan-a35);
+  --tag-cyan-text: var(--zg-cyan-400);
+  --tag-amber-bg: var(--zg-amber-a14);
+  --tag-amber-border: var(--zg-amber-a35);
+  --tag-amber-text: var(--zg-amber-400);
+
+  --status-approved: var(--zg-green-400);
+  --status-pending: var(--zg-amber-400);
+
+  --dialog-surface: var(--zg-gray-850);
+  --dialog-title: var(--zg-gray-0);
+  --dialog-text: var(--zg-gray-400);
+  --dialog-btn-bg: var(--zg-gray-800);
+  --dialog-btn-text: var(--zg-gray-400);
+  --dialog-btn-hover-bg: var(--zg-gray-750);
+  --dialog-primary-bg: var(--zg-gray-0);
+  --dialog-primary-text: var(--zg-gray-950);
+
+  --control-bg: var(--zg-alpha-white-04);
+  --control-border: var(--zg-alpha-white-10);
+  --control-hover-border: var(--zg-violet-a50);
+  --control-focus-border: var(--zg-violet-500);
+  --control-text: var(--zg-gray-250);
+  --control-placeholder: var(--zg-gray-350);
+
+  --xmd-bg-color: var(--zg-gray-800);
+  --xmd-color: var(--zg-gray-0);
+  --xmd-user-chat-bg-color: var(--zg-gray-850);
+  --xmd-ai-pre-border-color: var(--zg-gray-800);
+  --xinput-upload-bg-color: var(--zg-gray-1000);
+  --xinput-upload-border-color: transparent;
+  --xinput-upload-file-card-bg: var(--zg-gray-1000);
+  --message-bg: var(--zg-gray-700);
+
+  --home-dropdown-menu-bg: var(--zg-gray-850);
+  --home-dropdown-menu-item-hover-bg: var(--zg-gray-800);
+
+  --content-scroll-color: var(--zg-gray-700);
+}
+
+/* ============================================================
+   恒定暗色页面：无视全局明暗主题，始终走暗色
+   底色比 .dark 更深一档（#0a0a0a / #141414），描边更收敛
+   ============================================================ */
+.subscription-form-page,
+.report-archive-page,
+.bill-management-page,
+.personal-subscription-admin-page,
+.expense-registration-page,
+.cost-control-page,
+.quota-action-drawer,
+.quota-alloc-drawer,
+.receiver-drawer,
+.event-detail-drawer,
+.event-conclusion-drawer,
+.registration-drawer,
+.cost-control-message,
+.dark-dialog,
+.dark-message-box {
+  --second-bg-color: var(--zg-gray-950);
+  --third-bg-color: var(--zg-gray-900);
+  --hover-color: var(--zg-alpha-white-06);
+  --surface-border: var(--zg-alpha-white-06);
+
+  --main-color: var(--zg-gray-0);
+  --second-color: var(--zg-gray-400);
+  --ai-hover-color: var(--zg-gray-650);
+
+  --surface-hover-border: var(--zg-violet-a40);
+  --surface-hover-shadow: var(--zg-shadow-lg-dark);
+  --brand-glow: 0 8px 24px var(--zg-indigo-a25);
+
+  --control-bg: var(--zg-alpha-white-04);
+  --control-border: var(--zg-alpha-white-10);
+  --control-hover-border: var(--zg-violet-a50);
+  --control-focus-border: var(--zg-violet-500);
+  --control-text: var(--zg-gray-250);
+  --control-placeholder: var(--zg-gray-350);
+
+  --tag-blue-bg: var(--zg-indigo-a15);
+  --tag-blue-border: var(--zg-indigo-a30);
+  --tag-blue-text: var(--zg-indigo-400);
+  --tag-violet-bg: var(--zg-violet-a15);
+  --tag-violet-border: var(--zg-violet-a30);
+  --tag-violet-text: var(--zg-violet-400);
+  --tag-cyan-bg: var(--zg-cyan-a12);
+  --tag-cyan-border: var(--zg-cyan-a35);
+  --tag-cyan-text: var(--zg-cyan-400);
+  --tag-amber-bg: var(--zg-amber-a14);
+  --tag-amber-border: var(--zg-amber-a35);
+  --tag-amber-text: var(--zg-amber-400);
+
+  --status-approved: var(--zg-green-400);
+  --status-pending: var(--zg-amber-400);
+
+  /* 弹窗浮在这些更深的页面之上，表面比 .dark 再抬一档才分得开层次 */
+  --dialog-surface: var(--zg-gray-870);
+  --dialog-title: var(--zg-gray-0);
+  --dialog-text: var(--zg-gray-400);
+  --dialog-btn-bg: var(--zg-gray-800);
+  --dialog-btn-text: var(--zg-gray-400);
+  --dialog-btn-hover-bg: var(--zg-gray-750);
+  --dialog-primary-bg: var(--zg-gray-0);
+  --dialog-primary-text: var(--zg-gray-950);
+}
+
+/* ============================================================
+   靛蓝单色皮肤：费用管理 / 个人订阅管理 / 成本管控
+   这些页面的相邻分类需要靠颜色区分，靛蓝→紫渐变两端色差过小
+   （常视 ΔE 11.1、protan ΔE 1.8）无法分辨，故紫色不参与本档取色。
+   取值经色板验证：暗底 #141414 上相邻对 CVD ΔE >= 8.4、常视 ΔE >= 19.3。
+   ============================================================ */
+.bill-management-page,
+.personal-subscription-admin-page,
+.expense-registration-page,
+.cost-control-page,
+.quota-action-drawer,
+.quota-alloc-drawer,
+.receiver-drawer,
+.event-detail-drawer,
+.event-conclusion-drawer,
+.registration-drawer,
+.cost-control-message,
+/* 弹窗预设（dark-message-box / dark-dialog）是全站共用的，本身不带页面品牌色；
+   从本档页面打开的弹窗额外带上这个类，里面的控件才跟页面一样是蓝色而不是紫色 */
+.indigo-mono {
+  --brand-indigo: var(--zg-blue-500);
+  /* 辉光跟随本档品牌色，不能留靛蓝 */
+  --brand-glow: 0 8px 24px var(--zg-blue-a25);
+
+  --control-hover-border: var(--zg-blue-a50);
+  --control-focus-border: var(--zg-blue-500);
+  /* 页头一排控件的描边：取自首页「联网搜索 / 生成图片」胶囊，比 --control-border 更实 */
+  --control-border-strong: var(--zg-gray-650);
+
+  /* 流水表格「费用来源」标签底色；文字色由 categoryColor() 按类目内联给出 */
+  --tag-blue-bg: var(--zg-blue-a15);
+  --tag-blue-text: var(--zg-blue-500);
+
+  /* 审核状态：与分类色分属两套，且状态另有文字做冗余编码 */
+  --status-approved: var(--zg-green-500);
+  --status-pending: var(--zg-amber-500);
+  --status-rejected: var(--zg-red-500);
+}
+
+/* ============================================================
+   资讯中心皮肤：M3 暗色方案（种子色品牌蓝），无视全局主题始终暗色
+   页面根 .news-admin-page；被 teleport 到 body 的浮层各带一个类名：
+     .news-admin-drawer       el-drawer 的 class
+     .news-admin-dialog       el-dialog 的 class
+     .news-admin-message-box  ElMessageBox 的 customClass
+     .news-admin-message      ElMessage 的 customClass
+     .news-admin-popper       el-select / el-dropdown / el-popover 的 popper-class
+   本块排在恒定暗色档之后，浮层与 dark-dialog / dark-message-box 预设同时使用时取本档取值。
+   「本档专属」一节的 token 只在本档定义，其他页面不要引用。
+   ============================================================ */
+.news-admin-page,
+.news-admin-drawer,
+.news-admin-dialog,
+.news-admin-message-box,
+.news-admin-message,
+.news-admin-popper {
+  /* --- 表面 --- */
+  --main-bg-color: var(--zg-m3-surface);
+  --second-bg-color: var(--zg-m3-surface);
+  --third-bg-color: var(--zg-m3-surface-container-low);
+  --hover-color: var(--zg-m3-surface-container-high);
+  --ai-hover-color: var(--zg-m3-surface-container-high);
+
+  /* --- 文字 --- */
+  --main-color: var(--zg-m3-on-surface);
+  --second-color: var(--zg-m3-on-surface-variant);
+  --ai-icon-color: var(--zg-m3-on-surface-variant);
+
+  /* --- 描边 / 阴影 --- */
+  --surface-border: var(--zg-m3-outline-variant);
+  --surface-hover-border: var(--zg-m3-outline);
+  --surface-hover-shadow: var(--zg-shadow-m3-1);
+  --shadow-popup: var(--zg-shadow-m3-3);
+
+  /* --- 品牌：强调色只用于主操作、选中态和需要注意的状态 --- */
+  --brand-indigo: var(--zg-m3-primary);
+  --brand-violet: var(--zg-m3-primary);
+  --brand-gradient: linear-gradient(135deg, var(--zg-m3-primary) 0%, var(--zg-m3-primary) 100%);
+  --brand-bar: linear-gradient(180deg, var(--zg-m3-primary) 0%, var(--zg-m3-primary) 100%);
+  --brand-glow: var(--zg-shadow-m3-1);
+
+  /* --- 状态 --- */
+  --status-approved: var(--zg-m3-success);
+  --status-pending: var(--zg-m3-warning);
+  --status-rejected: var(--zg-m3-error);
+
+  /* --- 表单控件：填充底色，无静态描边（描边色与底色相同），聚焦主色 --- */
+  --control-bg: var(--zg-m3-surface-container-highest);
+  --control-border: var(--zg-m3-surface-container-highest);
+  --control-border-strong: var(--zg-m3-outline);
+  --control-hover-border: var(--zg-m3-outline);
+  --control-focus-border: var(--zg-m3-primary);
+  --control-text: var(--zg-m3-on-surface);
+  --control-placeholder: var(--zg-m3-outline);
+
+  /* --- 弹窗：surface-container-high 表面，次按钮为主色文字按钮 --- */
+  --dialog-surface: var(--zg-m3-surface-container-high);
+  --dialog-title: var(--zg-m3-on-surface);
+  --dialog-text: var(--zg-m3-on-surface-variant);
+  --dialog-btn-bg: var(--zg-m3-surface-container-high);
+  --dialog-btn-text: var(--zg-m3-primary);
+  --dialog-btn-hover-bg: var(--zg-m3-surface-container-highest);
+  --dialog-primary-bg: var(--zg-m3-primary);
+  --dialog-primary-text: var(--zg-m3-on-primary);
+  --dialog-danger-bg: var(--zg-m3-error);
+  --dialog-danger-text: var(--zg-m3-on-error);
+
+  /* --- 滚动条 --- */
+  --content-scroll-color: var(--zg-m3-outline-variant);
+  --scroll-track-color: var(--zg-m3-surface);
+
+  /* --- Element Plus：把 Element 的全局变量接到 M3 角色。
+         Element 在各组件根上重设组件级变量（--el-input-* / --el-switch-* 等），从这里继承不到，
+         组件级的取值连同尺寸、形态补丁写在 views/newsAdmin/newsAdminElement.scss --- */
+  --el-color-primary: var(--zg-m3-primary);
+  --el-color-primary-light-3: var(--zg-m3-primary);
+  --el-color-primary-light-5: var(--zg-m3-on-surface-a38);
+  --el-color-primary-light-7: var(--zg-m3-primary-a16);
+  --el-color-primary-light-8: var(--zg-m3-primary-a16);
+  --el-color-primary-light-9: var(--zg-m3-primary-a06);
+  --el-color-primary-dark-2: var(--zg-m3-primary);
+  --el-color-success: var(--zg-m3-success);
+  --el-color-warning: var(--zg-m3-warning);
+  --el-color-danger: var(--zg-m3-error);
+  --el-color-error: var(--zg-m3-error);
+  --el-color-info: var(--zg-m3-outline);
+  --el-text-color-primary: var(--zg-m3-on-surface);
+  --el-text-color-regular: var(--zg-m3-on-surface);
+  --el-text-color-secondary: var(--zg-m3-on-surface-variant);
+  --el-text-color-placeholder: var(--zg-m3-outline);
+  --el-text-color-disabled: var(--zg-m3-on-surface-a38);
+  --el-bg-color: var(--zg-m3-surface-container-high);
+  --el-bg-color-page: var(--zg-m3-surface);
+  --el-bg-color-overlay: var(--zg-m3-surface-container);
+  --el-border-color: var(--zg-m3-outline-variant);
+  --el-border-color-light: var(--zg-m3-outline-variant);
+  --el-border-color-lighter: var(--zg-m3-outline-variant);
+  --el-border-color-extra-light: var(--zg-m3-outline-variant);
+  --el-border-color-dark: var(--zg-m3-outline);
+  --el-border-color-darker: var(--zg-m3-outline);
+  --el-border-color-hover: var(--zg-m3-outline);
+  --el-fill-color: var(--zg-m3-surface-container-highest);
+  --el-fill-color-light: var(--zg-m3-surface-container-high);
+  --el-fill-color-lighter: var(--zg-m3-surface-container);
+  --el-fill-color-extra-light: var(--zg-m3-surface-container-low);
+  --el-fill-color-dark: var(--zg-m3-surface-container-highest);
+  --el-fill-color-darker: var(--zg-m3-surface-container-highest);
+  --el-fill-color-blank: var(--zg-m3-surface-container-highest);
+  --el-disabled-bg-color: var(--zg-m3-surface-container-highest);
+  --el-disabled-text-color: var(--zg-m3-on-surface-a38);
+  --el-disabled-border-color: var(--zg-m3-surface-container-highest);
+  --el-box-shadow: var(--zg-shadow-m3-3);
+  --el-box-shadow-light: var(--zg-shadow-m3-2);
+  --el-box-shadow-lighter: var(--zg-shadow-m3-1);
+  --el-box-shadow-dark: var(--zg-shadow-m3-3);
+  --el-border-radius-base: var(--zg-radius-md);
+  --el-border-radius-small: var(--zg-radius-sm);
+  --el-border-radius-round: var(--zg-radius-pill);
+
+  /* ---------- 本档专属 ---------- */
+  /* 表面阶梯：container（AI 结构化结果卡片底、代码块）→ high（搜索框）→ highest（输入框、胶囊按钮、头像） */
+  --surface-container: var(--zg-m3-surface-container);
+  --surface-container-high: var(--zg-m3-surface-container-high);
+  --surface-container-highest: var(--zg-m3-surface-container-highest);
+  /* 列表行悬停：叠在行底色上的状态层 */
+  --row-hover-overlay: var(--zg-m3-on-surface-a04);
+  /* 强描边：筛选 chip、描边按钮、占位符 */
+  --surface-outline: var(--zg-m3-outline);
+  --text-disabled: var(--zg-m3-on-surface-a38);
+  /* 菜单项、下拉选项悬停的状态层 */
+  --state-layer-hover: var(--zg-m3-on-surface-a08);
+  /* 禁用的实底按钮底色 */
+  --disabled-container: var(--zg-m3-on-surface-a12);
+  /* 缩略图上的时长角标 */
+  --media-badge-bg: var(--zg-alpha-black-60);
+  --media-badge-text: var(--zg-gray-0);
+  --focus-ring: var(--zg-m3-secondary);
+
+  /* 主色实底上的文字、主色容器 */
+  --on-brand: var(--zg-m3-on-primary);
+  --brand-container: var(--zg-m3-primary-container);
+  --on-brand-container: var(--zg-m3-on-primary-container);
+  /* AI 结构化结果卡片：主色淡底 + 细描边 */
+  --brand-tint: var(--zg-m3-primary-a06);
+  --brand-tint-border: var(--zg-m3-primary-a16);
+
+  /* 选中态：导航胶囊、选中的选项 chip、次要实底按钮 */
+  --selected-bg: var(--zg-m3-secondary-container);
+  --selected-text: var(--zg-m3-on-secondary-container);
+
+  /* 状态容器：「已通过」标记 / 警示条 / 失败提示 */
+  --status-approved-container: var(--zg-m3-success-container);
+  --on-status-approved-container: var(--zg-m3-on-success-container);
+  --status-pending-container: var(--zg-m3-warning-container);
+  --on-status-pending-container: var(--zg-m3-on-warning-container);
+  --status-rejected-container: var(--zg-m3-error-container);
+  --on-status-rejected-container: var(--zg-m3-on-error-container);
+  --control-error-border: var(--zg-m3-error);
+
+  /* 数量角标（导航栏待审数） */
+  --badge-bg: var(--zg-m3-error);
+  --badge-text: var(--zg-m3-on-error);
+
+  /* 底部提示：反相表面，操作按钮用 inverse-primary */
+  --snackbar-bg: var(--zg-m3-on-surface);
+  --snackbar-text: var(--zg-m3-inverse-on-surface);
+  --snackbar-action: var(--zg-m3-inverse-primary);
+
+  /* 标签循环配色：「显示为标签」的字段按选项顺序取第 1~5 组 */
+  --tag-cycle-1-bg: var(--zg-tag-1-bg);
+  --tag-cycle-1-text: var(--zg-tag-1-text);
+  --tag-cycle-2-bg: var(--zg-tag-2-bg);
+  --tag-cycle-2-text: var(--zg-tag-2-text);
+  --tag-cycle-3-bg: var(--zg-tag-3-bg);
+  --tag-cycle-3-text: var(--zg-tag-3-text);
+  --tag-cycle-4-bg: var(--zg-tag-4-bg);
+  --tag-cycle-4-text: var(--zg-tag-4-text);
+  --tag-cycle-5-bg: var(--zg-tag-5-bg);
+  --tag-cycle-5-text: var(--zg-tag-5-text);
+}
+
+/* ============================================================
+   已废弃：早期模板残留的 token
+   仍有约 26 处引用，新代码禁止使用，迁移完成后整块删除。
+   对应关系见 design-system/MASTER.md「废弃 token」一节。
+   ============================================================ */
+:root {
+  --primary-color: #3a86ff;
+  --secondary-color: #8338ec;
+  --accent-color: #ff006e;
+  --background-color: #f8f9fa;
+  --dark-bg: #121212;
+  --light-text: #ffffff;
+  --dark-text: #333333;
+  --card-bg: #ffffff;
+  --border-radius: 8px;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
