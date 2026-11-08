@@ -2,29 +2,39 @@ package com.zengame.ai.business.news;
 
 import com.zengame.ai.business.news.setting.NewsAiFieldSettingService;
 import com.zengame.ai.business.news.setting.NewsAiModelSettingService;
+import com.zengame.ai.business.news.setting.NewsFeishuAuthorizationService;
 import com.zengame.ai.business.news.setting.NewsFeishuNotificationSettingService;
 import com.zengame.ai.business.news.setting.NewsRejectReasonSettingService;
 import com.zengame.ai.business.news.setting.domain.request.NewsAiFieldSaveRequest;
 import com.zengame.ai.business.news.setting.domain.request.NewsAiFieldSortRequest;
 import com.zengame.ai.business.news.setting.domain.request.NewsAiModelSaveRequest;
 import com.zengame.ai.business.news.setting.domain.request.NewsEnabledRequest;
+import com.zengame.ai.business.news.setting.domain.request.NewsFeishuAppRequest;
 import com.zengame.ai.business.news.setting.domain.request.NewsFeishuNotificationSaveRequest;
 import com.zengame.ai.business.news.setting.domain.request.NewsRejectReasonSaveRequest;
 import com.zengame.ai.business.news.setting.domain.vo.NewsAiFieldVO;
 import com.zengame.ai.business.news.setting.domain.vo.NewsAiModelSettingVO;
+import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuAuthorizationStartVO;
+import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuAuthorizedUserVO;
 import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuNotificationSettingVO;
 import com.zengame.ai.business.news.setting.domain.vo.NewsRejectReasonVO;
 import com.zengame.ai.infrastructure.common.Result;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -35,11 +45,13 @@ import java.util.List;
 public class NewsSettingController {
 
     private static final String PREFIX = "/ai/api/web/v1/news/setting";
+    private static final String FEISHU_AUTHORIZATION = PREFIX + "/notification-channel/authorization";
 
     private final NewsAiFieldSettingService newsAiFieldSettingService;
 
     private final NewsAiModelSettingService newsAiModelSettingService;
     private final NewsFeishuNotificationSettingService newsFeishuNotificationSettingService;
+    private final NewsFeishuAuthorizationService newsFeishuAuthorizationService;
 
     private final NewsRejectReasonSettingService newsRejectReasonSettingService;
 
@@ -96,6 +108,46 @@ public class NewsSettingController {
     public Result<Void> verifyNotificationChannel(@Valid @RequestBody NewsFeishuNotificationSaveRequest request) {
         newsFeishuNotificationSettingService.verify(request);
         return Result.ok();
+    }
+
+    /**
+     * @param request 当前通知应用的凭证
+     * @param session 发起授权的管理员会话
+     * @return 飞书授权页地址和本次授权标识
+     */
+    @PostMapping(FEISHU_AUTHORIZATION)
+    public Result<NewsFeishuAuthorizationStartVO> startFeishuAuthorization(
+            @Valid @RequestBody NewsFeishuAppRequest request, HttpSession session) {
+        return Result.ok(newsFeishuAuthorizationService.start(request, session));
+    }
+
+    /**
+     * @param state 飞书回传的授权标识
+     * @param code 用户同意后回传的授权码
+     * @param error 用户拒绝时回传的错误标记
+     * @param session 发起授权的管理员会话
+     * @return 授权窗口的返回提示
+     */
+    @GetMapping(FEISHU_AUTHORIZATION + "/callback")
+    public ResponseEntity<String> completeFeishuAuthorization(@RequestParam String state,
+            @RequestParam(required = false) String code, @RequestParam(required = false) String error,
+            HttpSession session) {
+        newsFeishuAuthorizationService.complete(session, state, code, error);
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+                .header("Referrer-Policy", "no-referrer")
+                .contentType(new MediaType("text", "plain", StandardCharsets.UTF_8))
+                .body("飞书授权已处理，请返回资讯推荐助手查看结果。");
+    }
+
+    /**
+     * @param state 本次授权标识
+     * @param session 发起授权的管理员会话
+     * @return 授权人的飞书身份；等待授权时数据为空
+     */
+    @GetMapping(FEISHU_AUTHORIZATION + "/result")
+    public Result<NewsFeishuAuthorizedUserVO> getFeishuAuthorizationResult(@RequestParam String state,
+            HttpSession session) {
+        return Result.ok(newsFeishuAuthorizationService.result(session, state));
     }
 
     /**

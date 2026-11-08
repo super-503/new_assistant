@@ -4,6 +4,7 @@ import com.zengame.ai.apiclient.feishu.FeishuAppRobotClient;
 import com.zengame.ai.apiclient.feishu.FeishuRobotClient;
 import com.zengame.ai.business.news.setting.cover.NewsFeishuNotificationSettingConvert;
 import com.zengame.ai.business.news.setting.domain.bo.NewsFeishuNotificationConfig;
+import com.zengame.ai.business.news.setting.domain.request.NewsFeishuAppRequest;
 import com.zengame.ai.business.news.setting.domain.request.NewsFeishuNotificationSaveRequest;
 import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuNotificationSettingVO;
 import com.zengame.ai.config.properties.NewsProperties;
@@ -63,6 +64,16 @@ public class NewsFeishuNotificationSettingService {
     }
 
     /**
+     * 获取飞书接收人授权使用的应用凭证。
+     * @param request 通知表单中的应用凭证
+     * @return 同一个飞书应用的完整凭证
+     * @throws BusinessException 未提供或保存该应用的 App Secret
+     */
+    public FeishuAppRobotClient.AppCredentials authorizationCredentials(NewsFeishuAppRequest request) {
+        return new FeishuAppRobotClient.AppCredentials(request.getAppId(), resolveSecret(request, mapper::select));
+    }
+
+    /**
      * 获取本次日报的发送目标。已保存的应用配置决定启停，未设置应用时使用部署配置中的群机器人。
      * @return 本次日报使用的发送器；没有启用的通知目标时为空
      */
@@ -85,12 +96,16 @@ public class NewsFeishuNotificationSettingService {
      */
     private NewsFeishuNotificationConfig resolve(NewsFeishuNotificationSaveRequest request,
                                                  Supplier<NewsFeishuNotificationSettingPO> savedSetting) {
-        String secret = Optional.ofNullable(StringUtils.trimToNull(request.getAppSecret()))
+        return NewsFeishuNotificationSettingConvert.INSTANCE.toConfig(request, resolveSecret(request, savedSetting));
+    }
+
+    /** @return 表单提供的密钥或已保存的同应用密钥 */
+    private String resolveSecret(NewsFeishuAppRequest request, Supplier<NewsFeishuNotificationSettingPO> savedSetting) {
+        return Optional.ofNullable(StringUtils.trimToNull(request.getAppSecret()))
                 .or(() -> Optional.ofNullable(savedSetting.get())
                         .filter(setting -> setting.getAppId().equals(request.getAppId()))
                         .map(NewsFeishuNotificationSettingPO::getAppSecret))
                 .orElseThrow(() -> new BusinessException("请填写该飞书应用的 App Secret"));
-        return NewsFeishuNotificationSettingConvert.INSTANCE.toConfig(request, secret);
     }
 
     /** @return 指向该应用单聊接收人的发送器 */

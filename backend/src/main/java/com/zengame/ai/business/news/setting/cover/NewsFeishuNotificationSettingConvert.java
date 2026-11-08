@@ -3,6 +3,7 @@ package com.zengame.ai.business.news.setting.cover;
 import com.zengame.ai.apiclient.feishu.FeishuAppRobotClient;
 import com.zengame.ai.business.news.setting.domain.bo.NewsFeishuNotificationConfig;
 import com.zengame.ai.business.news.setting.domain.request.NewsFeishuNotificationSaveRequest;
+import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuAuthorizedUserVO;
 import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuNotificationSettingVO;
 import com.zengame.ai.repository.ai.po.NewsFeishuNotificationSettingPO;
 import org.mapstruct.Mapper;
@@ -32,4 +33,7 @@ public interface NewsFeishuNotificationSettingConvert {
 
     /** 返回飞书单聊所需的应用凭证和接收人。 */
     FeishuAppRobotClient.Recipient toRecipient(NewsFeishuNotificationConfig config);
+
+    /** 返回通知配置页可展示的飞书授权人。 */
+    NewsFeishuAuthorizedUserVO toAuthorizedUser(FeishuAppRobotClient.AuthorizedUser user);
 }

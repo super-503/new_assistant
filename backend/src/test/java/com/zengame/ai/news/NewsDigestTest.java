@@ -15,6 +15,7 @@ import com.zengame.ai.task.NewsDigestTask;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
@@ -36,6 +37,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class NewsDigestTest {
@@ -145,6 +148,51 @@ class NewsDigestTest {
     }
 
     @Test
+    void reportsFeishuAuthErrorCodeAndCredentialHintWithoutExposingTheResponseBody() {
+        when(settings.select()).thenReturn(appSetting(true));
+        when(items.selectUnsentDigestItemsForUpdate(eq(NewsItemStatus.APPROVED), anyInt())).thenReturn(List.of(video()));
+        feishu.expect(requestTo(TOKEN_URL)).andRespond(withBadRequest().contentType(MediaType.APPLICATION_JSON)
+                .body("{\"code\":20002,\"error_description\":\"upstream-debug-value\"}"));
+
+        assertThatThrownBy(task::sendDigest).isInstanceOf(BusinessException.class)
+                .hasMessageContaining("HTTP 400，code=20002")
+                .hasMessageContaining("App Secret")
+                .hasMessageNotContaining("upstream-debug-value");
+
+        feishu.verify();
+        verify(items, never()).markDigestSent(anyList());
+    }
+
+    @Test
+    void reportsMissingSendPermissionFromTheMessageApiAfterSuccessfulAuthentication() {
+        var appClient = new FeishuAppRobotClient(restTemplate);
+        var target = new FeishuAppRobotClient.Recipient("cli_demo", "test-secret", "ou_demo");
+        expectToken();
+        feishu.expect(requestTo(MESSAGE_URL)).andRespond(withStatus(HttpStatus.FORBIDDEN)
+                .contentType(MediaType.APPLICATION_JSON).body("{\"code\":99991672}"));
+
+        assertThatThrownBy(() -> appClient.sender(target).accept("测试消息"))
+                .isInstanceOf(BusinessException.class).hasMessageContaining("飞书单聊发送失败，HTTP 403，code=99991672")
+                .hasMessageContaining("以应用的身份发消息")
+                .hasMessageContaining("获取与发送单聊、群组消息");
+
+        feishu.verify();
+    }
+
+    @Test
+    void reportsHttpStatusWhenFeishuReturnsANonJsonError() {
+        var appClient = new FeishuAppRobotClient(restTemplate);
+        var target = new FeishuAppRobotClient.Recipient("cli_demo", "test-secret", "ou_demo");
+        feishu.expect(requestTo(TOKEN_URL)).andRespond(withBadRequest().contentType(MediaType.TEXT_PLAIN)
+                .body("gateway debug output"));
+
+        assertThatThrownBy(() -> appClient.sender(target).accept("测试消息"))
+                .isInstanceOf(BusinessException.class).hasMessage("飞书应用鉴权失败，HTTP 400");
+
+        feishu.verify();
+    }
+
+    @Test
     void disabledAppConfigurationPausesDigestDelivery() {
         properties.setDigestFeishuWebhook(WEBHOOK);
         when(settings.select()).thenReturn(appSetting(false));
@@ -160,6 +208,7 @@ class NewsDigestTest {
                 .andExpect(jsonPath("$.grant_type").value("client_credentials"))
                 .andExpect(jsonPath("$.client_id").value("cli_demo"))
                 .andExpect(jsonPath("$.client_secret").value("test-secret"))
+                .andExpect(jsonPath("$.scope").doesNotHaveJsonPath())
                 .andRespond(withSuccess("{\"code\":0,\"access_token\":\"test-token\",\"expires_in\":7200}",
                         MediaType.APPLICATION_JSON));
     }

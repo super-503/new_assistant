@@ -43,6 +43,7 @@ news:
   model-api-key: ${NEWS_MODEL_API_KEY:}
   feishu-webhook: ${NEWS_FEISHU_WEBHOOK:}
   digest-feishu-webhook: ${NEWS_DIGEST_FEISHU_WEBHOOK:}
+  feishu-authorization-redirect-uri: '${NEWS_FEISHU_AUTHORIZATION_REDIRECT_URI:http://127.0.0.1:${NEWS_PORT:8091}/ai/api/web/v1/news/setting/notification-channel/authorization/callback}'
   digest-cron: '${NEWS_DIGEST_CRON:0 5 21 * * *}'
   job-family-enabled: ${NEWS_JOB_FAMILY_ENABLED:false}
   sync-job-families: ${NEWS_SYNC_JOB_FAMILIES:false}

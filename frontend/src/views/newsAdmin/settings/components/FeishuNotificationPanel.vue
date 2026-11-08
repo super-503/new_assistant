@@ -4,16 +4,24 @@ import { NewsApiError } from '@/api/newsAdminRequest'
 import {
   saveNotificationChannelApi,
   verifyNotificationChannelApi,
+  type NewsFeishuAuthorizedUser,
   type NewsFeishuNotificationInput,
   type NewsFeishuNotificationSetting
 } from '@/api/newsSetting'
 import { useNewsSettingStore } from '@/stores/newsAdmin/newsSettingStore'
+import NewsSourceAvatar from '../../components/NewsSourceAvatar.vue'
 import { notifySuccess } from '../../newsNotify'
+import FeishuAuthorizeButton from './FeishuAuthorizeButton.vue'
 import SettingsFormCard from './SettingsFormCard.vue'
 
 const settingStore = useNewsSettingStore()
 const form = reactive({ appId: '', appSecret: '', openId: '', enabled: true })
 const action = ref<'load' | 'save' | 'verify' | null>(null)
+const authorizedRecipient = ref<{ appId: string; user: NewsFeishuAuthorizedUser } | null>(null)
+const recipientProfile = computed(() => {
+  const recipient = authorizedRecipient.value
+  if (recipient?.appId === form.appId.trim() && recipient.user.openId === form.openId.trim()) return recipient.user
+})
 const status = computed(() => {
   const saved = settingStore.notificationChannel
   if (!saved) return
@@ -21,7 +29,7 @@ const status = computed(() => {
   return saved.enabled ? '已启用' : '已停用'
 })
 const hasSavedSecret = computed(
-  () => settingStore.notificationChannel?.configured && form.appId.trim() === settingStore.notificationChannel.appId
+  () => !!settingStore.notificationChannel?.configured && form.appId.trim() === settingStore.notificationChannel.appId
 )
 const canSubmit = computed(
   () => !!form.appId.trim() && !!form.openId.trim() && (!!form.appSecret.trim() || hasSavedSecret.value) && !action.value
@@ -32,6 +40,12 @@ const fillForm = (setting: NewsFeishuNotificationSetting) => {
   form.appSecret = ''
   form.openId = setting.openId
   form.enabled = !setting.configured || setting.enabled
+}
+
+const selectAuthorizedUser = (user: NewsFeishuAuthorizedUser) => {
+  form.openId = user.openId
+  authorizedRecipient.value = { appId: form.appId.trim(), user }
+  notifySuccess('已填入当前飞书账号，请确认后保存配置')
 }
 
 const load = async () => {
@@ -106,7 +120,28 @@ onMounted(load)
           />
         </el-form-item>
         <el-form-item class="settings-field-wide" label="接收人 Open ID" required>
-          <el-input v-model="form.openId" placeholder="ou_ 开头的用户 ID" :maxlength="128" />
+          <div class="recipient-input">
+            <el-input
+              v-model="form.openId"
+              aria-label="接收人 Open ID"
+              placeholder="ou_ 开头的用户 ID"
+              :maxlength="128"
+            />
+            <FeishuAuthorizeButton
+              :app-id="form.appId"
+              :app-secret="form.appSecret"
+              :has-saved-secret="hasSavedSecret"
+              :disabled="action !== null"
+              @authorized="selectAuthorizedUser"
+            />
+          </div>
+          <div v-if="recipientProfile" class="recipient-profile">
+            <NewsSourceAvatar
+              :name="recipientProfile.name || '飞书'"
+              :src="recipientProfile.avatarUrl?.startsWith('https://') ? recipientProfile.avatarUrl : undefined"
+            />
+            {{ recipientProfile.name || '已授权飞书账号' }}
+          </div>
         </el-form-item>
       </div>
       <div class="settings-option">
@@ -124,3 +159,28 @@ onMounted(load)
     </el-form>
   </SettingsFormCard>
 </template>
+
+<style scoped lang="scss">
+.recipient-input {
+  display: flex;
+  align-items: center;
+  gap: var(--zg-space-md);
+  width: 100%;
+
+  .el-input {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.recipient-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--zg-space-md);
+  margin-top: var(--zg-space-sm);
+  color: var(--second-color);
+  font-size: var(--zg-text-md);
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+</style>

@@ -36,12 +36,27 @@ export interface NewsFeishuNotificationSetting {
   configured: boolean
 }
 
-export interface NewsFeishuNotificationInput {
+export interface NewsFeishuAppInput {
   appId: string
-  openId: string
-  enabled: boolean
   /** null 沿用同一个应用已保存的密钥。 */
   appSecret: string | null
+}
+
+export interface NewsFeishuNotificationInput extends NewsFeishuAppInput {
+  openId: string
+  enabled: boolean
+}
+
+export interface NewsFeishuAuthorizedUser {
+  openId: string
+  name: string | null
+  avatarUrl: string | null
+}
+
+interface NewsFeishuAuthorizationStart {
+  state: string
+  authorizationUrl: string
+  expiresIn: number
 }
 
 export const getNotificationChannelApi = () =>
@@ -52,6 +67,12 @@ export const saveNotificationChannelApi = (input: NewsFeishuNotificationInput) =
 
 export const verifyNotificationChannelApi = (input: NewsFeishuNotificationInput) =>
   newsRequestData(post<null>(`${PREFIX}/notification-channel/verify`, input))
+
+export const startFeishuAuthorizationApi = (input: NewsFeishuAppInput) =>
+  newsRequestData(post<NewsFeishuAuthorizationStart>(`${PREFIX}/notification-channel/authorization`, input), false)
+
+export const getFeishuAuthorizationResultApi = (state: string) =>
+  newsRequestData(get<NewsFeishuAuthorizedUser | null>(`${PREFIX}/notification-channel/authorization/result`, { state }), false)
 
 /** AI 字段的来源内容：与后端 NewsAiFieldSource 对应 */
 export type NewsAiFieldSource = 'BODY' | 'TITLE' | 'TITLE_BODY'

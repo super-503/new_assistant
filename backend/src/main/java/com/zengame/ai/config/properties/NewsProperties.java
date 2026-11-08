@@ -16,6 +16,7 @@ public class NewsProperties {
     private String modelApiKey;
     private String feishuWebhook;
     private String digestFeishuWebhook;
+    private String feishuAuthorizationRedirectUri;
     private boolean jobFamilyEnabled;
     private boolean syncJobFamilies;
     private XChannel x;

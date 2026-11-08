@@ -59,6 +59,7 @@ java -jar backend/target/news-recommendation-assistant-1.0.0.jar
 | `NEWS_X_PROXY_HOST`、`NEWS_X_PROXY_PORT` | X 渠道的可选 HTTP 代理 |
 | `NEWS_FEISHU_WEBHOOK`、`NEWS_ADMIN_URL` | 飞书机器人 Webhook 和渠道页面完整地址，用于凭证失效和岗位分类通知 |
 | `NEWS_DIGEST_FEISHU_WEBHOOK` | 未保存飞书应用机器人配置时，日报可使用此飞书群机器人 Webhook |
+| `NEWS_FEISHU_AUTHORIZATION_REDIRECT_URI` | 飞书接收人授权的回调地址。默认使用 `127.0.0.1` 和 `NEWS_PORT`，其他访问域名需配置完整回调地址 |
 | `NEWS_DIGEST_CRON` | 日报推送计划，默认 `0 5 21 * * *`，即每天 21:05，使用 `NEWS_TIME_ZONE`。设为 `-` 可暂停定时推送 |
 | `NEWS_JOB_FAMILY_ENABLED` | 岗位分类开关，个人版默认关闭。设为 `true` 后重启可启用 |
 | `NEWS_BIND_ADDRESS`、`NEWS_PORT` | 监听地址和端口，默认 `127.0.0.1:8091` |
@@ -71,12 +72,22 @@ AIBase 随库初始化一个订阅源。公众号和 B 站在渠道设置中扫�
 
 ## 个人飞书日报（B 站示例）
 
-1. 在飞书开放平台创建自建应用，添加机器人能力，开通 `im:message:send_as_bot`，将接收人加入应用可用范围并发布。取得 App ID、App Secret 和接收人在这个应用内的 Open ID。[飞书机器人说明](https://open.feishu.cn/document/client-docs/bot-v3/bot-overview) · [获取 Open ID](https://open.feishu.cn/document/faq/trouble-shooting/how-to-obtain-openid)
+1. 在飞书开放平台创建自建应用并添加机器人能力。应用身份权限开通「以应用的身份发消息」（`im:message:send_as_bot`）或「获取与发送单聊、群组消息」（`im:message`）之一，将接收人加入应用可用范围并发布。取得 App ID、App Secret 和接收人在这个应用内的 Open ID。[飞书发送消息权限](https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1) · [获取 Open ID](https://open.feishu.cn/document/faq/trouble-shooting/how-to-obtain-openid)
 2. 启动资讯推荐助手，在「基础配置 → 通知发送渠道」填写三项配置。点击「发送测试消息」可检查飞书单聊是否收到，点击「保存配置」应用到日报任务。编辑同一个 App ID 时，App Secret 留空可沿用已保存的密钥。
 3. 在「渠道配置 → B 站 → 渠道设置」扫码登录。用昵称或 UID 搜索并添加订阅源，选择「立即拉取」。启用的订阅源也会由定时任务拉取。
 4. 在「资讯审核」打开待审视频并通过。日报在下一次运行时发送已通过且尚未发送的资讯，包含原标题、作者和原文链接。
 
 首次运行会包含资讯库中已有的已通过资讯。没有待发内容时跳过推送，飞书确认接收后记录发送时间，失败的批次在下一次运行时重试。
+
+### 授权飞书填写接收人
+
+在飞书开发者后台打开日报应用的「安全设置」，添加以下重定向 URL。本地访问资讯推荐助手时使用 `http://127.0.0.1:8091`。[飞书重定向 URL 配置](https://open.feishu.cn/document/uAjLw4CM/ugTN1YjL4UTN24CO1UjN/trouble-shooting/how-to-resolve-the-authorization-page-20029-error)
+
+```text
+http://127.0.0.1:8091/ai/api/web/v1/news/setting/notification-channel/authorization/callback
+```
+
+在「通知发送渠道」输入 App ID 和 App Secret 后，点击「授权飞书」。授权成功会填入该账号的 Open ID 并显示飞书姓名。确认后可发送测试消息，再保存配置。
 
 ## 资讯 AI 模型
 

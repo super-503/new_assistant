@@ -10,16 +10,7 @@ import javax.validation.constraints.Size;
 /** 飞书通知配置表单。同一个 App ID 的密钥留空时沿用已保存的值。 */
 @Getter
 @Setter
-public class NewsFeishuNotificationSaveRequest {
-
-    @NotNull
-    @Pattern(regexp = "cli_[a-zA-Z0-9_-]+", message = "请填写有效的飞书 App ID")
-    @Size(max = 128)
-    private String appId;
-
-    @Size(max = 512)
-    @Pattern(regexp = "[^\\p{Cntrl}]*", message = "App Secret 不能包含控制字符")
-    private String appSecret;
+public class NewsFeishuNotificationSaveRequest extends NewsFeishuAppRequest {
 
     @NotNull
     @Pattern(regexp = "ou_[a-zA-Z0-9_-]+", message = "请填写有效的飞书接收人 Open ID")
