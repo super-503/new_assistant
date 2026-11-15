@@ -1,62 +1,154 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useNewsSettingStore } from '@/stores/newsAdmin/newsSettingStore'
-import NewsTabs, { type NewsTab } from '../components/NewsTabs.vue'
-import AiFieldPanel from './components/AiFieldPanel.vue'
-import AiModelPanel from './components/AiModelPanel.vue'
+import { computed, ref } from 'vue'
+import AiProcessingPanel from './components/AiProcessingPanel.vue'
 import FeishuNotificationPanel from './components/FeishuNotificationPanel.vue'
+import PushPlanPanel from './components/PushPlanPanel.vue'
 import RejectReasonPanel from './components/RejectReasonPanel.vue'
+import { FEISHU_SECTIONS, type FeishuSection, type SettingsSection } from './settingsSection'
 
-const SETTINGS_TABS: NewsTab[] = [
-  { key: 'aiModel', label: 'AI 模型' },
-  { key: 'aiFields', label: 'AI 字段' },
-  { key: 'rejectReasons', label: '拒绝理由' },
-  { key: 'notification', label: '通知发送渠道' }
-]
+const section = ref<SettingsSection>('ai')
+const pushExpanded = ref(false)
+const feishuExpanded = ref(false)
+const feishuSection = computed(() => FEISHU_SECTIONS.find((entry) => entry.key === section.value))
+const title = computed(() => {
+  if (section.value === 'ai') return '模型与 AI 字段'
+  if (section.value === 'plans') return '推送计划'
+  if (section.value === 'rejectReasons') return '拒绝理由'
+  return feishuSection.value?.label
+})
 
-const activeTab = ref('aiModel')
-const settingStore = useNewsSettingStore()
+const openFeishu = (entry: FeishuSection) => {
+  pushExpanded.value = true
+  feishuExpanded.value = true
+  section.value = entry
+}
 </script>
 
 <template>
-  <main class="settings-page">
-    <div class="settings-content">
-      <h1 class="page-title">基础配置</h1>
-      <NewsTabs v-model="activeTab" class="settings-tabs" :tabs="SETTINGS_TABS" label="基础配置分类" />
-      <section v-show="activeTab === 'aiModel'" role="tabpanel" aria-label="AI 模型">
-        <AiModelPanel />
-      </section>
-      <section v-if="activeTab === 'aiFields'" class="settings-table" role="tabpanel" aria-label="AI 字段">
-        <AiFieldPanel v-if="settingStore.aiModel?.configured" />
-        <div v-else class="model-required">
-          <p>{{ settingStore.aiModel ? '请先保存模型配置，再使用 AI 字段。' : '请先加载模型配置。' }}</p>
-          <el-button type="primary" @click="activeTab = 'aiModel'">前往 AI 模型</el-button>
+  <div class="settings-page">
+    <nav class="settings-nav" aria-label="基础配置分类">
+      <button
+        type="button"
+        class="settings-nav-item"
+        :class="{ 'is-active': section === 'ai' }"
+        :aria-current="section === 'ai' ? 'page' : undefined"
+        @click="section = 'ai'"
+      >
+        <SvgIcon icon-class="newsAdmin-spark" size="20" /> 模型与 AI 字段
+      </button>
+      <button
+        type="button"
+        class="settings-nav-item branch"
+        :class="{ 'branch-current': feishuSection }"
+        :aria-expanded="pushExpanded"
+        aria-controls="settings-push-channels"
+        @click="pushExpanded = !pushExpanded"
+      >
+        <SvgIcon icon-class="newsAdmin-rss" size="20" /> 推送渠道配置
+        <SvgIcon class="branch-arrow" icon-class="newsAdmin-chevron-right" size="16" />
+      </button>
+      <div v-show="pushExpanded" id="settings-push-channels" class="nav-children" role="group" aria-label="推送渠道配置">
+        <button
+          type="button"
+          class="settings-nav-item branch nested-item"
+          :class="{ 'branch-current': feishuSection }"
+          :aria-expanded="feishuExpanded"
+          aria-controls="settings-feishu-sections"
+          @click="feishuExpanded = !feishuExpanded"
+        >
+          飞书
+          <SvgIcon class="branch-arrow" icon-class="newsAdmin-chevron-right" size="16" />
+        </button>
+        <div v-show="feishuExpanded" id="settings-feishu-sections" class="nav-children" role="group" aria-label="飞书">
+          <button
+            v-for="entry in FEISHU_SECTIONS"
+            :key="entry.key"
+            type="button"
+            class="settings-nav-item nested-item"
+            :class="{ 'is-active': section === entry.key }"
+            :aria-current="section === entry.key ? 'page' : undefined"
+            @click="section = entry.key"
+          >
+            {{ entry.label }}
+          </button>
         </div>
-      </section>
-      <section v-else-if="activeTab === 'rejectReasons'" class="settings-table" role="tabpanel" aria-label="拒绝理由">
-        <RejectReasonPanel />
-      </section>
-      <section v-else-if="activeTab === 'notification'" role="tabpanel" aria-label="通知发送渠道">
-        <FeishuNotificationPanel />
-      </section>
-    </div>
-  </main>
+      </div>
+      <button
+        type="button"
+        class="settings-nav-item"
+        :class="{ 'is-active': section === 'plans' }"
+        :aria-current="section === 'plans' ? 'page' : undefined"
+        @click="section = 'plans'"
+      >
+        <SvgIcon icon-class="newsAdmin-article" size="20" /> 推送计划
+      </button>
+      <button
+        type="button"
+        class="settings-nav-item"
+        :class="{ 'is-active': section === 'rejectReasons' }"
+        :aria-current="section === 'rejectReasons' ? 'page' : undefined"
+        @click="section = 'rejectReasons'"
+      >
+        <SvgIcon icon-class="newsAdmin-review" size="20" /> 拒绝理由
+      </button>
+    </nav>
+    <main class="settings-main">
+      <div class="settings-content">
+        <header class="page-heading">
+          <p v-if="feishuSection" class="settings-path">推送渠道配置 / 飞书</p>
+          <h1 class="page-title">{{ title }}</h1>
+        </header>
+        <KeepAlive>
+          <AiProcessingPanel v-if="section === 'ai'" />
+          <RejectReasonPanel v-else-if="section === 'rejectReasons'" />
+          <PushPlanPanel v-else-if="section === 'plans'" @open-feishu="openFeishu" />
+          <FeishuNotificationPanel v-else :section="section" />
+        </KeepAlive>
+      </div>
+    </main>
+  </div>
 </template>
 
 <style scoped lang="scss">
+@use '../components/newsConfigLayout' as *;
+
 .settings-page {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: var(--zg-space-2xl) clamp(12px, 2.4vw, 24px) var(--zg-space-3xl);
-  overflow-y: auto;
+  @include config-page;
+}
+
+.settings-nav {
+  @include config-nav;
+}
+
+.settings-nav-item {
+  @include config-nav-item;
+}
+
+.nav-children {
+  display: grid;
+  gap: var(--zg-space-2xs);
+  margin-left: var(--zg-space-xl);
+  padding-left: var(--zg-space-sm);
+  border-left: 1px solid var(--surface-border);
+}
+
+.nested-item { height: 36px; }
+.branch-current { font-weight: var(--zg-weight-semibold); }
+.branch-arrow { margin-left: auto; }
+.branch[aria-expanded='true'] .branch-arrow { transform: rotate(90deg); }
+
+.settings-path {
+  margin: 0 0 var(--zg-space-sm);
+  color: var(--second-color);
+  font-size: var(--zg-text-sm);
+}
+
+.settings-main {
+  @include config-main;
 }
 
 .settings-content {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--zg-space-xl);
-  max-width: 960px;
-  margin-inline: auto;
+  @include config-inner;
 }
 
 .page-title {
@@ -66,34 +158,32 @@ const settingStore = useNewsSettingStore()
   font-weight: var(--zg-weight-semibold);
 }
 
-.settings-tabs {
-  :deep(.news-tab) {
+@media (max-width: 760px) {
+  .settings-page {
+    flex-direction: column;
+  }
+
+  .settings-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     flex: none;
-    white-space: nowrap;
+    border-right: 0;
+    border-bottom: 1px solid var(--surface-border);
   }
-}
 
-@media (max-width: 520px) {
-  .settings-tabs {
+  .settings-nav-item {
+    height: auto;
+    min-height: 36px;
+    padding: var(--zg-space-xs) var(--zg-space-sm);
+  }
+
+  .nav-children {
+    grid-column: 1 / -1;
+    display: flex;
     flex-wrap: wrap;
+    margin-left: var(--zg-space-sm);
 
-    :deep(.news-tab) {
-      flex: 0 0 50%;
-      padding-inline: var(--zg-space-sm);
-    }
-  }
-}
-
-.settings-table {
-  overflow-x: auto;
-}
-
-.model-required {
-  color: var(--second-color);
-  font-size: var(--zg-text-base);
-
-  p {
-    margin: 0 0 var(--zg-space-lg);
+    .settings-nav-item { width: auto; }
   }
 }
 </style>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zengame.ai.repository.ai.mapper.NewsFeishuDigestDeliveryMapper">
+    <select id="selectDelivered" resultType="java.lang.Long">
+        SELECT item_id FROM news_feishu_digest_delivery
+        WHERE app_id = #{appId} AND open_id = #{openId} AND item_id IN
+        <foreach collection="itemIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+
+    <insert id="markDelivered">
+        INSERT INTO news_feishu_digest_delivery (item_id, app_id, open_id) VALUES
+        <foreach collection="itemIds" item="id" separator=",">(#{id}, #{appId}, #{openId})</foreach>
+    </insert>
+
+    <delete id="deleteByItemIds">
+        DELETE FROM news_feishu_digest_delivery WHERE item_id IN
+        <foreach collection="itemIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+    <select id="selectPlanDelivered" resultType="java.lang.Long">
+        SELECT item_id FROM news_push_plan_delivery
+        WHERE plan_id = #{planId} AND app_id = #{appId} AND open_id = #{openId} AND item_id IN
+        <foreach collection="itemIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+
+    <insert id="markPlanDelivered">
+        INSERT INTO news_push_plan_delivery (plan_id, item_id, app_id, open_id) VALUES
+        <foreach collection="itemIds" item="id" separator=",">(#{planId}, #{id}, #{appId}, #{openId})</foreach>
+    </insert>
+
+    <insert id="markPlanItemsCompleted">
+        INSERT INTO news_push_plan_item (plan_id, item_id) VALUES
+        <foreach collection="itemIds" item="id" separator=",">(#{planId}, #{id})</foreach>
+    </insert>
+
+    <delete id="deletePlanDelivered">
+        DELETE FROM news_push_plan_delivery WHERE plan_id = #{planId} AND item_id IN
+        <foreach collection="itemIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+    <insert id="completePlanItems">
+        <bind name="targetCount" value="targets.size()"/>
+        INSERT INTO news_push_plan_item (plan_id, item_id)
+        SELECT #{planId}, receipt.item_id
+        FROM news_push_plan_delivery receipt
+        WHERE receipt.plan_id = #{planId}
+          AND (
+            <foreach collection="targets" item="target" separator=" OR ">
+                (receipt.app_id = #{target.appId} AND receipt.open_id = #{target.openId})
+            </foreach>
+          )
+        GROUP BY receipt.item_id
+        HAVING COUNT(*) = #{targetCount}
+        ON DUPLICATE KEY UPDATE item_id = VALUES(item_id)
+    </insert>
+
+    <delete id="deleteCompletedPlanDelivered">
+        DELETE receipt FROM news_push_plan_delivery receipt
+        INNER JOIN news_push_plan_item completed ON completed.plan_id = receipt.plan_id AND completed.item_id = receipt.item_id
+        WHERE receipt.plan_id = #{planId}
+    </delete>
+</mapper>

@@ -3,6 +3,7 @@ package com.zengame.ai.repository.ai.mapper;
 import com.zengame.ai.business.news.domain.enums.NewsItemStatus;
 import com.zengame.ai.business.news.library.domain.bo.NewsItemGroupCountBO;
 import com.zengame.ai.business.news.review.domain.bo.NewsItemQueryBO;
+import com.zengame.ai.business.news.setting.domain.bo.NewsDigestContentSettings;
 import com.zengame.ai.repository.ai.po.NewsItemPO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -66,6 +67,37 @@ public interface NewsItemMapper {
      * @return 待推送的资讯，包含主键、原标题、作者和原文链接
      */
     List<NewsItemPO> selectUnsentDigestItemsForUpdate(@Param("status") NewsItemStatus status, @Param("limit") int limit);
+
+    /**
+     * @param status 审核通过状态
+     * @param scope 日报可选的资讯范围
+     * @param limit 最多读取的资讯条数
+     * @return 最近通过审核的资讯，供日报卡片试发使用
+     */
+    List<NewsItemPO> selectRecentDigestItems(@Param("status") NewsItemStatus status,
+                                             @Param("scope") NewsDigestContentSettings scope, @Param("limit") int limit);
+
+    /**
+     * @param status 审核通过状态
+     * @param scope 日报可选的资讯范围
+     * @param limit 本批最多读取的条数
+     * @return 加锁的待投递资讯
+     */
+    List<NewsItemPO> selectFeishuDigestItemsForUpdate(@Param("status") NewsItemStatus status,
+                                                     @Param("scope") NewsDigestContentSettings scope,
+                                                     @Param("limit") int limit);
+
+    /** @return 指定计划尚未全部送达的资讯 */
+    List<NewsItemPO> selectPushPlanItemsForUpdate(@Param("planId") long planId, @Param("status") NewsItemStatus status,
+                                                @Param("scope") NewsDigestContentSettings scope,
+                                                @Param("limit") int limit);
+
+    /** @return 指定计划中该接收人尚未收到的资讯 */
+    List<NewsItemPO> selectPushPlanRecipientItemsForUpdate(@Param("planId") long planId,
+                                                         @Param("appId") String appId, @Param("openId") String openId,
+                                                         @Param("status") NewsItemStatus status,
+                                                         @Param("scope") NewsDigestContentSettings scope,
+                                                         @Param("limit") int limit);
 
     /**
      * 记录已推送到个人日报的资讯。

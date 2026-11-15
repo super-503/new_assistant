@@ -1,87 +1,128 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { NewsApiError } from '@/api/newsAdminRequest'
 import {
-  saveNotificationChannelApi,
-  verifyNotificationChannelApi,
-  type NewsFeishuAuthorizedUser,
-  type NewsFeishuNotificationInput,
-  type NewsFeishuNotificationSetting
+  getFeishuBotProfileApi,
+  saveFeishuChannelApi,
+  type NewsFeishuAppDraft,
+  type NewsFeishuChannel,
+  type NewsFeishuChannelInput
 } from '@/api/newsSetting'
 import { useNewsSettingStore } from '@/stores/newsAdmin/newsSettingStore'
-import NewsSourceAvatar from '../../components/NewsSourceAvatar.vue'
-import { notifySuccess } from '../../newsNotify'
-import FeishuAuthorizeButton from './FeishuAuthorizeButton.vue'
-import SettingsFormCard from './SettingsFormCard.vue'
+import type { FeishuSection } from '../settingsSection'
+import { notifyError, notifySuccess } from '../../newsNotify'
+import { savedDigestContent } from './digestContentDraft'
+import FeishuAppSettings from './FeishuAppSettings.vue'
+import FeishuCardSettings from './FeishuCardSettings.vue'
+import FeishuRecipientSettings from './FeishuRecipientSettings.vue'
+import { hydrateCardDraft, serializeCardDraft, type FeishuCardDraft } from './feishuCardForm'
+
+const props = defineProps<{ section: FeishuSection }>()
 
 const settingStore = useNewsSettingStore()
-const form = reactive({ appId: '', appSecret: '', openId: '', enabled: true })
-const action = ref<'load' | 'save' | 'verify' | null>(null)
-const authorizedRecipient = ref<{ appId: string; user: NewsFeishuAuthorizedUser } | null>(null)
-const recipientProfile = computed(() => {
-  const recipient = authorizedRecipient.value
-  if (recipient?.appId === form.appId.trim() && recipient.user.openId === form.openId.trim()) return recipient.user
+const form = ref<Omit<NewsFeishuChannelInput, 'card'> & { card: FeishuCardDraft }>()
+const loading = ref(false)
+const saving = ref(false)
+const savedApps = computed(() => settingStore.feishuChannel?.apps.map((app) => ({ ...app, appSecret: null })) ?? [])
+const savedAppIds = computed(() => savedApps.value.map((app) => app.appId))
+const savedRecipients = computed(() => settingStore.feishuChannel?.recipients ?? [])
+const saveLabels = { apps: '保存应用', recipients: '保存人员', card: '保存卡片' }
+const recipientCounts = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const recipient of form.value?.recipients ?? []) {
+    counts[recipient.appId] = (counts[recipient.appId] ?? 0) + 1
+  }
+  return counts
 })
-const status = computed(() => {
-  const saved = settingStore.notificationChannel
-  if (!saved) return
-  if (!saved.configured) return '未配置'
-  return saved.enabled ? '已启用' : '已停用'
+const copyChannel = (saved: NewsFeishuChannel): NewsFeishuChannelInput => ({
+  ...saved,
+  apps: saved.apps.map((app) => ({ ...app, appSecret: null })),
+  recipients: saved.recipients.map((recipient) => ({ ...recipient })),
+  content: savedDigestContent(saved)
 })
-const hasSavedSecret = computed(
-  () => !!settingStore.notificationChannel?.configured && form.appId.trim() === settingStore.notificationChannel.appId
-)
-const canSubmit = computed(
-  () => !!form.appId.trim() && !!form.openId.trim() && (!!form.appSecret.trim() || hasSavedSecret.value) && !action.value
-)
-
-const fillForm = (setting: NewsFeishuNotificationSetting) => {
-  form.appId = setting.appId
-  form.appSecret = ''
-  form.openId = setting.openId
-  form.enabled = !setting.configured || setting.enabled
-}
-
-const selectAuthorizedUser = (user: NewsFeishuAuthorizedUser) => {
-  form.openId = user.openId
-  authorizedRecipient.value = { appId: form.appId.trim(), user }
-  notifySuccess('已填入当前飞书账号，请确认后保存配置')
-}
 
 const load = async () => {
-  action.value = 'load'
+  loading.value = true
   try {
-    fillForm(await settingStore.ensureNotificationChannel())
-  } catch (error) {
-    if (!(error instanceof NewsApiError)) throw error
-  } finally {
-    action.value = null
-  }
-}
-
-const submit = async (mode: 'save' | 'verify') => {
-  if (!canSubmit.value) return
-  const input: NewsFeishuNotificationInput = {
-    appId: form.appId.trim(),
-    appSecret: form.appSecret.trim() || null,
-    openId: form.openId.trim(),
-    enabled: form.enabled
-  }
-  action.value = mode
-  try {
-    if (mode === 'verify') {
-      await verifyNotificationChannelApi(input)
-      notifySuccess('已发送测试消息，请查看飞书单聊')
-    } else {
-      const saved = await saveNotificationChannelApi(input)
-      settingStore.notificationChannel = saved
-      fillForm(saved)
-      notifySuccess('通知渠道已保存')
+    const saved = await settingStore.ensureFeishuChannel()
+    form.value = { ...copyChannel(saved), card: hydrateCardDraft(saved.card) }
+    if (saved.revision === 0 && form.value) {
+      for (const app of form.value.apps) void loadLegacyProfile(app)
     }
   } catch (error) {
     if (!(error instanceof NewsApiError)) throw error
   } finally {
-    action.value = null
+    loading.value = false
+  }
+}
+
+const loadLegacyProfile = async (app: NewsFeishuAppDraft) => {
+  try {
+    const profile = await getFeishuBotProfileApi({ appId: app.appId, appSecret: null }, false)
+    app.name = profile.name
+    app.avatarUrl = profile.avatarUrl?.startsWith('https://') ? profile.avatarUrl : null
+  } catch (error) {
+    if (!(error instanceof NewsApiError)) throw error
+  }
+}
+
+const changeApp = (app: NewsFeishuAppDraft) => {
+  if (!form.value) return
+  const index = form.value.apps.findIndex((item) => item.appId === app.appId)
+  if (index < 0) form.value.apps.push(app)
+  else form.value.apps[index] = app
+}
+
+const removeApp = (appId: string) => {
+  if (!form.value) return
+  form.value.apps = form.value.apps.filter((app) => app.appId !== appId)
+}
+
+const save = async () => {
+  const draft = form.value
+  const current = settingStore.feishuChannel
+  const section = props.section
+  if (!draft || !current || saving.value) return
+  const input = copyChannel(current)
+
+  if (section === 'apps') {
+    const appIds = new Set(draft.apps.map((app) => app.appId))
+    input.apps = draft.apps
+    input.recipients = input.recipients.filter((recipient) => appIds.has(recipient.appId))
+    input.enabled = draft.enabled && input.recipients.length > 0
+  } else if (section === 'recipients') {
+    input.recipients = draft.recipients
+    input.enabled = input.enabled && input.recipients.length > 0
+  } else {
+    const payload = serializeCardDraft(draft.card)
+    if ('error' in payload) {
+      notifyError(payload.error)
+      return
+    }
+    input.card = payload.card
+  }
+
+  saving.value = true
+  try {
+    const saved = await saveFeishuChannelApi(input)
+    const next = copyChannel(saved)
+    settingStore.feishuChannel = saved
+    if (section === 'apps') {
+      draft.apps = next.apps
+      draft.enabled = next.enabled
+      draft.recipients = draft.recipients.filter((recipient) => savedAppIds.value.includes(recipient.appId))
+    } else if (section === 'recipients') {
+      draft.recipients = next.recipients
+      if (!next.recipients.length) draft.enabled = false
+    } else {
+      draft.card = hydrateCardDraft(saved.card)
+    }
+    draft.revision = next.revision
+    notifySuccess({ apps: '应用已保存', recipients: '人员已保存', card: '卡片已保存' }[section])
+  } catch (error) {
+    if (!(error instanceof NewsApiError)) throw error
+  } finally {
+    saving.value = false
   }
 }
 
@@ -89,98 +130,124 @@ onMounted(load)
 </script>
 
 <template>
-  <SettingsFormCard
-    title="飞书应用机器人"
-    icon="newsAdmin-channels"
-    :status="status"
-    :active="settingStore.notificationChannel?.enabled"
-  >
-    <p v-if="action === 'load'" class="settings-feedback" role="status">正在加载通知渠道</p>
-    <div v-else-if="!settingStore.notificationChannel" class="settings-feedback">
+  <section class="feishu-settings" aria-label="飞书推送渠道配置">
+    <p v-if="loading" class="feishu-feedback" role="status">正在加载飞书配置</p>
+    <div v-else-if="!form" class="feishu-feedback">
       <el-button plain @click="load">重新加载</el-button>
     </div>
-    <el-form
-      v-else
-      label-position="top"
-      require-asterisk-position="right"
-      :disabled="action !== null"
-      @submit.prevent="submit('save')"
-    >
-      <div class="settings-fields">
-        <el-form-item label="App ID" required>
-          <el-input v-model="form.appId" placeholder="cli_ 开头的应用 ID" :maxlength="128" />
-        </el-form-item>
-        <el-form-item label="App Secret" required>
-          <el-input
-            v-model="form.appSecret"
-            type="password"
-            autocomplete="new-password"
-            :maxlength="512"
-            :placeholder="hasSavedSecret ? '已设置，留空保留' : '填写飞书应用密钥'"
-          />
-        </el-form-item>
-        <el-form-item class="settings-field-wide" label="接收人 Open ID" required>
-          <div class="recipient-input">
-            <el-input
-              v-model="form.openId"
-              aria-label="接收人 Open ID"
-              placeholder="ou_ 开头的用户 ID"
-              :maxlength="128"
-            />
-            <FeishuAuthorizeButton
-              :app-id="form.appId"
-              :app-secret="form.appSecret"
-              :has-saved-secret="hasSavedSecret"
-              :disabled="action !== null"
-              @authorized="selectAuthorizedUser"
-            />
-          </div>
-          <div v-if="recipientProfile" class="recipient-profile">
-            <NewsSourceAvatar
-              :name="recipientProfile.name || '飞书'"
-              :src="recipientProfile.avatarUrl?.startsWith('https://') ? recipientProfile.avatarUrl : undefined"
-            />
-            {{ recipientProfile.name || '已授权飞书账号' }}
-          </div>
-        </el-form-item>
-      </div>
-      <div class="settings-option">
-        <span id="digest-enabled-label">启用日报推送</span>
-        <el-switch v-model="form.enabled" aria-labelledby="digest-enabled-label" />
-      </div>
-      <div class="settings-actions">
-        <el-button plain :disabled="!canSubmit" :loading="action === 'verify'" @click="submit('verify')">
-          发送测试消息
-        </el-button>
-        <el-button type="primary" native-type="submit" :disabled="!canSubmit" :loading="action === 'save'">
-          保存配置
-        </el-button>
-      </div>
-    </el-form>
-  </SettingsFormCard>
+    <template v-else>
+      <template v-if="section === 'apps'">
+        <div class="digest-toggle">
+          <label for="feishu-digest-enabled">启用飞书渠道</label>
+          <el-switch id="feishu-digest-enabled" v-model="form.enabled" :disabled="saving || !savedRecipients.length" />
+        </div>
+        <FeishuAppSettings
+          :apps="form.apps"
+          :saved-app-ids="savedAppIds"
+          :recipient-counts="recipientCounts"
+          :disabled="saving"
+          @change="changeApp"
+          @remove="removeApp"
+        />
+      </template>
+      <FeishuRecipientSettings
+        v-else-if="section === 'recipients'"
+        v-model="form.recipients"
+        :apps="savedApps"
+        :saved-app-ids="savedAppIds"
+        :disabled="saving"
+      />
+      <FeishuCardSettings
+        v-else
+        v-model="form.card"
+        :apps="savedApps"
+        :recipients="savedRecipients"
+        :content="form.content"
+        :disabled="saving"
+      />
+      <footer class="feishu-footer">
+        <el-button type="primary" :loading="saving" @click="save">{{ saveLabels[section] }}</el-button>
+      </footer>
+    </template>
+  </section>
 </template>
 
 <style scoped lang="scss">
-.recipient-input {
-  display: flex;
-  align-items: center;
-  gap: var(--zg-space-md);
+.feishu-settings {
+  min-width: 0;
   width: 100%;
+  max-width: 960px;
+}
 
-  .el-input {
-    flex: 1;
-    min-width: 0;
+.digest-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zg-space-lg);
+  margin-bottom: var(--zg-space-xl);
+  padding-bottom: var(--zg-space-lg);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.digest-toggle,
+.feishu-feedback {
+  color: var(--second-color);
+}
+
+.feishu-settings {
+  :deep(.feishu-list) {
+    display: grid;
+    gap: var(--zg-space-lg);
+  }
+
+  :deep(.feishu-list-heading) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--zg-space-md);
+
+    h3 {
+      margin: 0;
+      font-size: var(--zg-text-lg);
+      font-weight: var(--zg-weight-semibold);
+    }
+
+    small {
+      margin-left: var(--zg-space-xs);
+      color: var(--second-color);
+      font-size: var(--zg-text-md);
+      font-weight: var(--zg-weight-medium);
+    }
+  }
+
+  :deep(.feishu-list-rows) {
+    border-block: 1px solid var(--surface-border);
+  }
+
+  :deep(.feishu-list-rows > .profile-row) {
+    padding-inline: 0;
+  }
+
+  :deep(.feishu-list-rows > .profile-row + .profile-row) {
+    border-top: 1px solid var(--surface-border);
+  }
+
+  :deep(.feishu-empty) {
+    margin: 0;
+    padding-block: var(--zg-space-xl);
+    border-block: 1px solid var(--surface-border);
+    color: var(--second-color);
   }
 }
 
-.recipient-profile {
+.feishu-footer {
   display: flex;
-  align-items: center;
-  gap: var(--zg-space-md);
-  margin-top: var(--zg-space-sm);
-  color: var(--second-color);
-  font-size: var(--zg-text-md);
-  line-height: 20px;
-  overflow-wrap: anywhere;
+  justify-content: flex-end;
+  margin-top: var(--zg-space-2xl);
+  padding-top: var(--zg-space-lg);
+  border-top: 1px solid var(--surface-border);
 }
+
 </style>

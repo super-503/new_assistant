@@ -17,6 +17,13 @@ public class NewsFeishuNotificationSaveRequest extends NewsFeishuAppRequest {
     @Size(max = 128)
     private String openId;
 
+    @Size(max = 255)
+    private String recipientName;
+
+    @Size(max = 2048)
+    @Pattern(regexp = "https://[^\\s]+", message = "飞书头像必须使用 HTTPS 地址")
+    private String recipientAvatarUrl;
+
     @NotNull
     private Boolean enabled;
 }

@@ -9,8 +9,10 @@ import com.zengame.ai.config.properties.NewsProperties;
 import com.zengame.ai.infrastructure.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataAccessException;
 
 import javax.servlet.http.HttpSession;
 import java.net.URI;
@@ -23,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /** 在当前管理员会话内识别飞书授权人，用于填写日报接收人。 */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class NewsFeishuAuthorizationService {
 
@@ -69,9 +72,14 @@ public class NewsFeishuAuthorizationService {
 
         try {
             FeishuAppRobotClient.AuthorizedUser user = appClient.authorizeUser(grant, code);
-            attempt.outcome = new Outcome(NewsFeishuNotificationSettingConvert.INSTANCE.toAuthorizedUser(user), null);
+            var authorizedUser = NewsFeishuNotificationSettingConvert.INSTANCE.toAuthorizedUser(user);
+            notificationSettings.rememberAuthorizedUser(grant.getCredentials().getAppId(), authorizedUser);
+            attempt.outcome = new Outcome(authorizedUser, null);
         } catch (BusinessException e) {
             attempt.outcome = new Outcome(null, e.getMessage());
+        } catch (DataAccessException e) {
+            log.error("保存飞书授权人员失败, appId={}", grant.getCredentials().getAppId(), e);
+            attempt.outcome = new Outcome(null, "飞书授权人员保存失败，请稍后重试");
         }
     }
 

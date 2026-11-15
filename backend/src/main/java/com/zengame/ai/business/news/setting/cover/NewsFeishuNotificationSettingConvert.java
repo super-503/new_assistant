@@ -4,8 +4,10 @@ import com.zengame.ai.apiclient.feishu.FeishuAppRobotClient;
 import com.zengame.ai.business.news.setting.domain.bo.NewsFeishuNotificationConfig;
 import com.zengame.ai.business.news.setting.domain.request.NewsFeishuNotificationSaveRequest;
 import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuAuthorizedUserVO;
+import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuBotProfileVO;
 import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuNotificationSettingVO;
 import com.zengame.ai.repository.ai.po.NewsFeishuNotificationSettingPO;
+import com.zengame.ai.repository.ai.po.NewsFeishuAuthorizedUserPO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -21,7 +23,10 @@ public interface NewsFeishuNotificationSettingConvert {
 
     /** 从表单和本次使用的 App Secret 生成发送配置。 */
     @Mapping(target = "appSecret", source = "secret")
-    NewsFeishuNotificationConfig toConfig(NewsFeishuNotificationSaveRequest request, String secret);
+    @Mapping(target = "recipientName", source = "recipientName")
+    @Mapping(target = "recipientAvatarUrl", source = "recipientAvatarUrl")
+    NewsFeishuNotificationConfig toConfig(NewsFeishuNotificationSaveRequest request, String secret,
+                                          String recipientName, String recipientAvatarUrl);
 
     /** 将飞书通知配置转换为持久化记录。 */
     @Mapping(target = "id", ignore = true)
@@ -36,4 +41,13 @@ public interface NewsFeishuNotificationSettingConvert {
 
     /** 返回通知配置页可展示的飞书授权人。 */
     NewsFeishuAuthorizedUserVO toAuthorizedUser(FeishuAppRobotClient.AuthorizedUser user);
+
+    /** @return 已授权人员可展示的资料 */
+    NewsFeishuAuthorizedUserVO toAuthorizedUser(NewsFeishuAuthorizedUserPO user);
+
+    /** @return 授权人员在指定飞书应用下的记录 */
+    NewsFeishuAuthorizedUserPO toAuthorizedUserPO(String appId, NewsFeishuAuthorizedUserVO user);
+
+    /** 返回飞书应用机器人的显示资料。 */
+    NewsFeishuBotProfileVO toBotProfile(FeishuAppRobotClient.BotProfile bot);
 }

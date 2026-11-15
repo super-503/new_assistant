@@ -3,7 +3,8 @@
 <mapper namespace="com.zengame.ai.repository.ai.mapper.NewsFeishuNotificationSettingMapper">
 
     <sql id="SelectSetting">
-        SELECT id, app_id AS appId, app_secret AS appSecret, open_id AS openId, enabled
+        SELECT id, app_id AS appId, app_secret AS appSecret, open_id AS openId,
+               recipient_name AS recipientName, recipient_avatar_url AS recipientAvatarUrl, enabled
         FROM news_feishu_notification_setting
         WHERE id = 1
     </sql>
@@ -18,9 +19,43 @@
     </select>
 
     <insert id="upsert">
-        INSERT INTO news_feishu_notification_setting (id, app_id, app_secret, open_id, enabled)
-        VALUES (1, #{appId}, #{appSecret}, #{openId}, #{enabled})
+        INSERT INTO news_feishu_notification_setting
+            (id, app_id, app_secret, open_id, recipient_name, recipient_avatar_url, enabled)
+        VALUES
+            (1, #{appId}, #{appSecret}, #{openId}, #{recipientName}, #{recipientAvatarUrl}, #{enabled})
         ON DUPLICATE KEY UPDATE
-            app_id = #{appId}, app_secret = #{appSecret}, open_id = #{openId}, enabled = #{enabled}
+            app_id = #{appId}, app_secret = #{appSecret}, open_id = #{openId},
+            recipient_name = #{recipientName}, recipient_avatar_url = #{recipientAvatarUrl}, enabled = #{enabled}
+    </insert>
+
+    <select id="selectChannel" resultType="com.zengame.ai.repository.ai.po.NewsFeishuChannelConfigPO">
+        SELECT revision, config_json AS configJson FROM news_feishu_channel_config WHERE id = 1
+    </select>
+
+    <select id="selectChannelForUpdate" resultType="com.zengame.ai.repository.ai.po.NewsFeishuChannelConfigPO">
+        SELECT revision, config_json AS configJson FROM news_feishu_channel_config WHERE id = 1 FOR UPDATE
+    </select>
+
+    <update id="updateChannel">
+        UPDATE news_feishu_channel_config SET revision = revision + 1, config_json = #{configJson} WHERE id = 1
+    </update>
+
+    <select id="selectAuthorizedUsers" resultType="com.zengame.ai.repository.ai.po.NewsFeishuAuthorizedUserPO">
+        SELECT app_id, open_id, name, avatar_url
+        FROM news_feishu_authorized_user
+        WHERE app_id = #{appId}
+        ORDER BY name, open_id
+    </select>
+
+    <select id="selectAuthorizedUser" resultType="com.zengame.ai.repository.ai.po.NewsFeishuAuthorizedUserPO">
+        SELECT app_id, open_id, name, avatar_url
+        FROM news_feishu_authorized_user
+        WHERE app_id = #{appId} AND open_id = #{openId}
+    </select>
+
+    <insert id="upsertAuthorizedUser">
+        INSERT INTO news_feishu_authorized_user (app_id, open_id, name, avatar_url)
+        VALUES (#{appId}, #{openId}, #{name}, #{avatarUrl})
+        ON DUPLICATE KEY UPDATE name = #{name}, avatar_url = #{avatarUrl}
     </insert>
 </mapper>

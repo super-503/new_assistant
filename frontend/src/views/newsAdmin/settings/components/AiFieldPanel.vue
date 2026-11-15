@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { deleteAiFieldApi, setAiFieldEnabledApi, sortAiFieldsApi, type NewsAiFieldSetting } from '@/api/newsSetting'
 import { useNewsSettingStore } from '@/stores/newsAdmin/newsSettingStore'
@@ -11,7 +11,7 @@ import AiFieldDialog from './AiFieldDialog.vue'
  * 编辑，普通字段可删除。列表顺序就是详情页的展示顺序。
  */
 const settingStore = useNewsSettingStore()
-const { aiFields } = storeToRefs(settingStore)
+const { aiFields, aiModel } = storeToRefs(settingStore)
 
 /** 列表行：拖动时先在本地调整顺序，保存后以接口返回为准 */
 const rows = ref<NewsAiFieldSetting[]>([])
@@ -104,82 +104,92 @@ const remove = async (field: NewsAiFieldSetting) => {
   await settingStore.refreshAiFields()
 }
 
-onMounted(() => void settingStore.ensureAiFields())
+watch(
+  () => aiModel.value?.configured,
+  (configured) => {
+    if (configured) void settingStore.ensureAiFields()
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
-  <div ref="panelRef" class="ai-field-panel">
-    <div class="panel-toolbar">
-      <el-button type="primary" @click="dialogRef?.open(null)">
+  <section ref="panelRef" class="ai-field-panel" aria-labelledby="ai-fields-title">
+    <header class="panel-toolbar">
+      <h2 id="ai-fields-title">AI 字段</h2>
+      <el-button v-if="aiModel?.configured" type="primary" @click="dialogRef?.open(null)">
         <SvgIcon icon-class="newsAdmin-add" size="18" />
         添加字段
       </el-button>
-    </div>
+    </header>
 
-    <div v-if="aiFields" class="field-table" role="table" aria-label="AI 字段">
-      <div class="table-head" role="row">
-        <span role="columnheader"><span class="sr-only">排序</span></span>
-        <span role="columnheader">字段名称</span>
-        <span role="columnheader">输出类型</span>
-        <span role="columnheader">提示词</span>
-        <span role="columnheader">启用</span>
-        <span role="columnheader">操作</span>
-      </div>
-      <div
-        v-for="(field, index) in rows"
-        :key="field.id"
-        class="field-row"
-        :class="[dropIndicatorClass(field), { 'is-dragging': draggingId === field.id }]"
-        role="row"
-        @dragover="onDragOver($event, field)"
-        @drop="onDrop(field)"
-      >
-        <span
-          class="drag-handle"
-          role="button"
-          tabindex="0"
-          draggable="true"
-          title="拖动排序"
-          :aria-label="`拖动排序：${field.name}，可用上下方向键移动`"
-          :data-handle-id="field.id"
-          @dragstart="onDragStart($event, field)"
-          @dragend="onDragEnd"
-          @keydown="onHandleKeydown($event, field, index)"
+    <p v-if="aiModel && !aiModel.configured" class="panel-feedback">保存模型配置后即可管理 AI 字段。</p>
+    <div v-else-if="aiModel?.configured && aiFields" class="field-table-scroll">
+      <div class="field-table" role="table" aria-label="AI 字段">
+        <div class="table-head" role="row">
+          <span role="columnheader"><span class="sr-only">排序</span></span>
+          <span role="columnheader">字段名称</span>
+          <span role="columnheader">输出类型</span>
+          <span role="columnheader">提示词</span>
+          <span role="columnheader">启用</span>
+          <span role="columnheader">操作</span>
+        </div>
+        <div
+          v-for="(field, index) in rows"
+          :key="field.id"
+          class="field-row"
+          :class="[dropIndicatorClass(field), { 'is-dragging': draggingId === field.id }]"
+          role="row"
+          @dragover="onDragOver($event, field)"
+          @drop="onDrop(field)"
         >
-          <SvgIcon icon-class="newsAdmin-drag-indicator" size="20" />
-        </span>
-        <span class="field-name" role="cell">
-          <span class="name-text">{{ field.name }}</span>
-          <span v-if="field.kind !== 'CUSTOM'" class="kind-tag">{{ field.kindDesc }}</span>
-        </span>
-        <span class="field-type" role="cell">{{ field.outputTypeLabel }}</span>
-        <span class="field-prompt" role="cell">
-          <el-tooltip
-            :content="field.prompt"
-            :trigger="['hover', 'focus']"
-            placement="top-start"
-            popper-class="news-admin-popper ai-field-prompt-popper"
+          <span
+            class="drag-handle"
+            role="button"
+            tabindex="0"
+            draggable="true"
+            title="拖动排序"
+            :aria-label="`拖动排序：${field.name}，可用上下方向键移动`"
+            :data-handle-id="field.id"
+            @dragstart="onDragStart($event, field)"
+            @dragend="onDragEnd"
+            @keydown="onHandleKeydown($event, field, index)"
           >
-            <span class="prompt-preview" tabindex="0">{{ field.prompt }}</span>
-          </el-tooltip>
-        </span>
-        <span role="cell">
-          <el-switch
-            :model-value="field.enabled"
-            :disabled="field.promptOnly"
-            :before-change="toggleEnabled(field)"
-            :aria-label="`启用：${field.name}`"
-          />
-        </span>
-        <span class="field-actions" role="cell">
-          <el-button text type="primary" @click="dialogRef?.open(field)">编辑</el-button>
-          <el-button v-if="field.deletable" text type="primary" @click="remove(field)">删除</el-button>
-        </span>
+            <SvgIcon icon-class="newsAdmin-drag-indicator" size="20" />
+          </span>
+          <span class="field-name" role="cell">
+            <span class="name-text">{{ field.name }}</span>
+            <span v-if="field.kind !== 'CUSTOM'" class="kind-tag">{{ field.kindDesc }}</span>
+          </span>
+          <span class="field-type" role="cell">{{ field.outputTypeLabel }}</span>
+          <span class="field-prompt" role="cell">
+            <el-tooltip
+              :content="field.prompt"
+              :trigger="['hover', 'focus']"
+              placement="top-start"
+              popper-class="news-admin-popper ai-field-prompt-popper"
+            >
+              <span class="prompt-preview" tabindex="0">{{ field.prompt }}</span>
+            </el-tooltip>
+          </span>
+          <span role="cell">
+            <el-switch
+              :model-value="field.enabled"
+              :disabled="field.promptOnly"
+              :before-change="toggleEnabled(field)"
+              :aria-label="`启用：${field.name}`"
+            />
+          </span>
+          <span class="field-actions" role="cell">
+            <el-button text type="primary" @click="dialogRef?.open(field)">编辑</el-button>
+            <el-button v-if="field.deletable" text type="primary" @click="remove(field)">删除</el-button>
+          </span>
+        </div>
       </div>
     </div>
 
-    <AiFieldDialog ref="dialogRef" />
-  </div>
+    <AiFieldDialog v-if="aiModel?.configured" ref="dialogRef" />
+  </section>
 </template>
 
 <style scoped lang="scss">
@@ -194,7 +204,30 @@ onMounted(() => void settingStore.ensureAiFields())
 
 .panel-toolbar {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zg-space-lg);
+  min-height: 32px;
+
+  h2 {
+    margin: 0;
+    font-size: var(--zg-text-lg);
+    font-weight: var(--zg-weight-semibold);
+  }
+}
+
+.panel-feedback {
+  margin: 0;
+  padding: var(--zg-space-xl);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--zg-radius-lg);
+  background: var(--third-bg-color);
+  color: var(--second-color);
+}
+
+.field-table-scroll {
+  overflow-x: auto;
+  border-radius: var(--zg-radius-lg);
 }
 
 .field-table {

@@ -79,6 +79,7 @@ onMounted(() => void settingStore.ensureRejectReasons())
   display: flex;
   flex-direction: column;
   gap: var(--zg-space-xl);
+  overflow-x: auto;
   animation: panel-enter 300ms var(--zg-ease-m3-emphasized-decelerate) both;
 }
 

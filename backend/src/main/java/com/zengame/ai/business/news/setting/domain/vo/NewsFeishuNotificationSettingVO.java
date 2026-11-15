@@ -7,6 +7,8 @@ import lombok.Value;
 public class NewsFeishuNotificationSettingVO {
     String appId;
     String openId;
+    String recipientName;
+    String recipientAvatarUrl;
     boolean configured;
     boolean enabled;
 }

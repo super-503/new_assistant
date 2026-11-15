@@ -17,7 +17,7 @@ const NAV_ITEMS: NavItem[] = [
   { routeName: 'NewsAdminReview', label: '资讯审核', icon: 'newsAdmin-review' },
   { routeName: 'NewsAdminLibrary', label: '资讯库', icon: 'newsAdmin-library' },
   { routeName: 'PaperSearch', label: '论文搜索', icon: 'newsAdmin-search' },
-  { routeName: 'NewsAdminChannels', label: '渠道配置', icon: 'newsAdmin-channels' },
+  { routeName: 'NewsAdminChannels', label: '渠道代理配置', icon: 'newsAdmin-channels' },
   { routeName: 'NewsAdminSettings', label: '基础配置', icon: 'newsAdmin-settings' }
 ]
 </script>
@@ -64,13 +64,14 @@ const NAV_ITEMS: NavItem[] = [
   flex-direction: column;
   align-items: center;
   gap: var(--zg-space-xs);
-  width: 72px;
+  width: 100%;
   border-radius: var(--zg-radius-md);
   color: var(--second-color);
   font-size: var(--zg-text-sm);
   line-height: 16px;
   font-weight: var(--zg-weight-medium);
   text-decoration: none;
+  white-space: nowrap;
 
   &:focus-visible {
     outline: 2px solid var(--focus-ring);

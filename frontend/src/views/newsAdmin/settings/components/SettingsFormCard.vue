@@ -27,7 +27,6 @@ const props = defineProps<{
   --form-padding: clamp(12px, 2.4vw, 24px);
 
   width: 100%;
-  max-width: 760px;
   overflow: hidden;
   border: 1px solid var(--surface-border);
   border-radius: var(--zg-radius-lg);
@@ -100,7 +99,7 @@ const props = defineProps<{
 
 .settings-form-card :deep(.settings-fields) {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--zg-space-xl);
   padding: var(--zg-space-xl) var(--form-padding);
 
@@ -111,6 +110,10 @@ const props = defineProps<{
 
   > .settings-field-wide {
     grid-column: 1 / -1;
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

@@ -1,5 +1,5 @@
 import { deleteRequest, get, post, putRequest } from '@/axios/request'
-import type { NewsAiFieldKind, NewsAiFieldOutputType } from './newsItem'
+import type { NewsAiFieldKind, NewsAiFieldOutputType, NewsContentType } from './newsItem'
 import { newsRequestData } from './newsAdminRequest'
 
 /** 基础配置页接口：与后端 NewsSettingController 对应 */
@@ -28,29 +28,69 @@ export const saveAiModelApi = (input: NewsAiModelInput) =>
 export const verifyAiModelApi = (input: NewsAiModelInput) =>
   newsRequestData(post<null>(`${PREFIX}/ai-model/verify`, input))
 
-/** 飞书应用机器人通知的可见配置。 */
-export interface NewsFeishuNotificationSetting {
-  appId: string
-  openId: string
-  enabled: boolean
-  configured: boolean
-}
-
 export interface NewsFeishuAppInput {
   appId: string
   /** null 沿用同一个应用已保存的密钥。 */
   appSecret: string | null
 }
 
-export interface NewsFeishuNotificationInput extends NewsFeishuAppInput {
+export interface NewsFeishuProfile {
+  name: string | null
+  avatarUrl: string | null
+}
+
+export interface NewsFeishuAuthorizedUser extends NewsFeishuProfile {
   openId: string
+}
+
+export interface NewsFeishuApp extends NewsFeishuProfile {
+  appId: string
+}
+
+export interface NewsFeishuAppDraft extends NewsFeishuApp, NewsFeishuAppInput {}
+
+export interface NewsFeishuRecipient extends NewsFeishuAuthorizedUser {
+  appId: string
+}
+
+export interface NewsFeishuCardSettings {
+  title: string
+  color: 'blue' | 'green' | 'orange' | 'purple'
+  showAuthor: boolean
+  template?: NewsFeishuCardTemplate | null
+}
+
+export interface NewsFeishuCardTemplate {
+  id: string
+  version: string
+  variablesJson: string
+  variableTypes?: Record<string, string> | null
+}
+
+export type NewsDigestDeliveryChannel = 'FEISHU'
+
+export interface NewsDigestContentSettings {
+  deliveryChannels: NewsDigestDeliveryChannel[]
+  channelCodes: string[]
+  contentTypes: NewsContentType[]
+  reviewDays: number | null
+  fields: string[]
+  useAiTitle: boolean
+  compact: boolean
+}
+
+export interface NewsFeishuChannel {
+  revision: number
+  apps: NewsFeishuApp[]
+  recipients: NewsFeishuRecipient[]
+  card: NewsFeishuCardSettings
+  content?: NewsDigestContentSettings | null
   enabled: boolean
 }
 
-export interface NewsFeishuAuthorizedUser {
-  openId: string
-  name: string | null
-  avatarUrl: string | null
+export interface NewsFeishuChannelInput extends NewsFeishuChannel {
+  apps: NewsFeishuAppDraft[]
+  content: NewsDigestContentSettings
 }
 
 interface NewsFeishuAuthorizationStart {
@@ -59,14 +99,22 @@ interface NewsFeishuAuthorizationStart {
   expiresIn: number
 }
 
-export const getNotificationChannelApi = () =>
-  newsRequestData(get<NewsFeishuNotificationSetting>(`${PREFIX}/notification-channel`))
+const FEISHU_CHANNEL = `${PREFIX}/notification-channel/feishu`
 
-export const saveNotificationChannelApi = (input: NewsFeishuNotificationInput) =>
-  newsRequestData(putRequest<NewsFeishuNotificationSetting>(`${PREFIX}/notification-channel`, input))
+export const getFeishuChannelApi = () => newsRequestData(get<NewsFeishuChannel>(FEISHU_CHANNEL))
 
-export const verifyNotificationChannelApi = (input: NewsFeishuNotificationInput) =>
-  newsRequestData(post<null>(`${PREFIX}/notification-channel/verify`, input))
+export const saveFeishuChannelApi = (input: NewsFeishuChannelInput) =>
+  newsRequestData(putRequest<NewsFeishuChannel>(FEISHU_CHANNEL, input))
+
+export const listFeishuAuthorizedUsersApi = (appId: string) =>
+  newsRequestData(get<NewsFeishuAuthorizedUser[]>(`${FEISHU_CHANNEL}/authorized-users`, { appId }))
+
+export const testFeishuCardApi = (
+  input: NewsFeishuAppInput & { openId: string; card: NewsFeishuCardSettings; content: NewsDigestContentSettings }
+) => newsRequestData(post<null>(`${FEISHU_CHANNEL}/test-card`, input))
+
+export const getFeishuBotProfileApi = (input: NewsFeishuAppInput, toast = true) =>
+  newsRequestData(post<NewsFeishuProfile>(`${PREFIX}/notification-channel/bot-profile`, input), toast)
 
 export const startFeishuAuthorizationApi = (input: NewsFeishuAppInput) =>
   newsRequestData(post<NewsFeishuAuthorizationStart>(`${PREFIX}/notification-channel/authorization`, input), false)

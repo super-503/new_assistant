@@ -2,7 +2,7 @@ import { get, post } from '@/axios/request'
 import type { NewsContentType } from './newsItem'
 import { newsRequestData } from './newsAdminRequest'
 
-/** 渠道配置页接口：与后端 NewsChannelController 对应 */
+/** 渠道代理配置页接口：与后端 NewsChannelController 对应 */
 const PREFIX = '/ai/api/web/v1/news'
 
 /** 凭证方式：与后端 NewsCredentialMode 对应，决定渠道设置里凭证区的形态 */

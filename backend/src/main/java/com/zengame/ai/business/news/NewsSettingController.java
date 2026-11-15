@@ -10,12 +10,16 @@ import com.zengame.ai.business.news.setting.domain.request.NewsAiFieldSortReques
 import com.zengame.ai.business.news.setting.domain.request.NewsAiModelSaveRequest;
 import com.zengame.ai.business.news.setting.domain.request.NewsEnabledRequest;
 import com.zengame.ai.business.news.setting.domain.request.NewsFeishuAppRequest;
+import com.zengame.ai.business.news.setting.domain.request.NewsFeishuCardTestRequest;
+import com.zengame.ai.business.news.setting.domain.request.NewsFeishuChannelSaveRequest;
 import com.zengame.ai.business.news.setting.domain.request.NewsFeishuNotificationSaveRequest;
 import com.zengame.ai.business.news.setting.domain.request.NewsRejectReasonSaveRequest;
 import com.zengame.ai.business.news.setting.domain.vo.NewsAiFieldVO;
 import com.zengame.ai.business.news.setting.domain.vo.NewsAiModelSettingVO;
 import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuAuthorizationStartVO;
 import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuAuthorizedUserVO;
+import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuBotProfileVO;
+import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuChannelVO;
 import com.zengame.ai.business.news.setting.domain.vo.NewsFeishuNotificationSettingVO;
 import com.zengame.ai.business.news.setting.domain.vo.NewsRejectReasonVO;
 import com.zengame.ai.infrastructure.common.Result;
@@ -46,6 +50,7 @@ public class NewsSettingController {
 
     private static final String PREFIX = "/ai/api/web/v1/news/setting";
     private static final String FEISHU_AUTHORIZATION = PREFIX + "/notification-channel/authorization";
+    private static final String FEISHU_CHANNEL = PREFIX + "/notification-channel/feishu";
 
     private final NewsAiFieldSettingService newsAiFieldSettingService;
 
@@ -107,6 +112,49 @@ public class NewsSettingController {
     @PostMapping(PREFIX + "/notification-channel/verify")
     public Result<Void> verifyNotificationChannel(@Valid @RequestBody NewsFeishuNotificationSaveRequest request) {
         newsFeishuNotificationSettingService.verify(request);
+        return Result.ok();
+    }
+
+    /**
+     * @param request 已保存或待添加的飞书应用凭证
+     * @return 应用机器人的名称和头像
+     */
+    @PostMapping(PREFIX + "/notification-channel/bot-profile")
+    public Result<NewsFeishuBotProfileVO> getFeishuBotProfile(@Valid @RequestBody NewsFeishuAppRequest request) {
+        return Result.ok(newsFeishuNotificationSettingService.botProfile(request));
+    }
+
+    /** @return 飞书应用、推送人员及日报卡片设置 */
+    @GetMapping(FEISHU_CHANNEL)
+    public Result<NewsFeishuChannelVO> getFeishuChannel() {
+        return Result.ok(newsFeishuNotificationSettingService.getChannel());
+    }
+
+    /**
+     * @param appId 推送应用 ID
+     * @return 可供管理员添加的已授权人员
+     */
+    @GetMapping(FEISHU_CHANNEL + "/authorized-users")
+    public Result<List<NewsFeishuAuthorizedUserVO>> listFeishuAuthorizedUsers(@RequestParam String appId) {
+        return Result.ok(newsFeishuNotificationSettingService.listAuthorizedUsers(appId));
+    }
+
+    /**
+     * @param request 飞书渠道的完整配置及编辑版本
+     * @return 保存后的渠道设置
+     */
+    @PutMapping(FEISHU_CHANNEL)
+    public Result<NewsFeishuChannelVO> saveFeishuChannel(@Valid @RequestBody NewsFeishuChannelSaveRequest request) {
+        return Result.ok(newsFeishuNotificationSettingService.saveChannel(request));
+    }
+
+    /**
+     * @param request 要试发的卡片、发信应用和接收人
+     * @return 飞书确认接收
+     */
+    @PostMapping(FEISHU_CHANNEL + "/test-card")
+    public Result<Void> verifyFeishuCard(@Valid @RequestBody NewsFeishuCardTestRequest request) {
+        newsFeishuNotificationSettingService.verifyCard(request);
         return Result.ok();
     }
 

@@ -10,5 +10,7 @@ public class NewsFeishuNotificationConfig {
     @ToString.Exclude
     String appSecret;
     String openId;
+    String recipientName;
+    String recipientAvatarUrl;
     boolean enabled;
 }

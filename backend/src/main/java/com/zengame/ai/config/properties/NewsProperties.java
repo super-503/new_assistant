@@ -17,6 +17,7 @@ public class NewsProperties {
     private String feishuWebhook;
     private String digestFeishuWebhook;
     private String feishuAuthorizationRedirectUri;
+    private String timeZone = "Asia/Shanghai";
     private boolean jobFamilyEnabled;
     private boolean syncJobFamilies;
     private XChannel x;

@@ -128,6 +128,69 @@
         FOR UPDATE
     </select>
 
+    <sql id="FeishuDigestColumns">
+        id, origin_title, author, canonical_url, publish_time, ai_values_json
+    </sql>
+
+    <sql id="FeishuDigestScope">
+        <if test="!scope.channelCodes.isEmpty()">
+            AND channel_code IN
+            <foreach collection="scope.channelCodes" item="code" open="(" separator="," close=")">#{code}</foreach>
+        </if>
+        <if test="!scope.contentTypes.isEmpty()">
+            AND content_type IN
+            <foreach collection="scope.contentTypes" item="type" open="(" separator="," close=")">#{type}</foreach>
+        </if>
+        <if test="scope.reviewDays != null">
+            AND review_time &gt;= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL #{scope.reviewDays} DAY)
+        </if>
+    </sql>
+
+    <select id="selectRecentDigestItems" resultType="com.zengame.ai.repository.ai.po.NewsItemPO">
+        SELECT <include refid="FeishuDigestColumns"/>
+        FROM news_item
+        WHERE status = #{status}
+        <include refid="FeishuDigestScope"/>
+        ORDER BY review_time DESC, id DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectFeishuDigestItemsForUpdate" resultType="com.zengame.ai.repository.ai.po.NewsItemPO">
+        SELECT <include refid="FeishuDigestColumns"/>
+        FROM news_item
+        WHERE status = #{status} AND digest_sent_time IS NULL
+        <include refid="FeishuDigestScope"/>
+        ORDER BY review_time, id
+        LIMIT #{limit}
+        FOR UPDATE
+    </select>
+
+    <select id="selectPushPlanItemsForUpdate" resultType="com.zengame.ai.repository.ai.po.NewsItemPO">
+        SELECT <include refid="FeishuDigestColumns"/>
+        FROM news_item
+        WHERE status = #{status}
+          AND NOT EXISTS (SELECT 1 FROM news_push_plan_item WHERE plan_id = #{planId} AND item_id = news_item.id)
+        <include refid="FeishuDigestScope"/>
+        ORDER BY review_time, id
+        LIMIT #{limit}
+        FOR UPDATE
+    </select>
+
+    <select id="selectPushPlanRecipientItemsForUpdate" resultType="com.zengame.ai.repository.ai.po.NewsItemPO">
+        SELECT <include refid="FeishuDigestColumns"/>
+        FROM news_item
+        WHERE status = #{status}
+          AND NOT EXISTS (SELECT 1 FROM news_push_plan_item WHERE plan_id = #{planId} AND item_id = news_item.id)
+          AND NOT EXISTS (
+              SELECT 1 FROM news_push_plan_delivery
+              WHERE plan_id = #{planId} AND app_id = #{appId} AND open_id = #{openId} AND item_id = news_item.id
+          )
+        <include refid="FeishuDigestScope"/>
+        ORDER BY review_time, id
+        LIMIT #{limit}
+        FOR UPDATE
+    </select>
+
     <update id="markDigestSent">
         UPDATE news_item
         SET digest_sent_time = CURRENT_TIMESTAMP

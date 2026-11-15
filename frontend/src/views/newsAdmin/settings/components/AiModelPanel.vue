@@ -66,7 +66,7 @@ onMounted(load)
 
 <template>
   <SettingsFormCard
-    title="OpenAI 兼容接口"
+    title="AI 模型"
     icon="newsAdmin-spark"
     :status="status"
     :active="settingStore.aiModel?.configured"

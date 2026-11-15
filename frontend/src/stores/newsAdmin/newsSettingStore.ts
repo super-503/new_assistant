@@ -2,12 +2,12 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import {
   getAiModelApi,
-  getNotificationChannelApi,
+  getFeishuChannelApi,
   listAiFieldsApi,
   listRejectReasonsApi,
   type NewsAiModelSetting,
   type NewsAiFieldSetting,
-  type NewsFeishuNotificationSetting,
+  type NewsFeishuChannel,
   type NewsRejectReasonSetting
 } from '@/api/newsSetting'
 
@@ -19,7 +19,7 @@ export const useNewsSettingStore = defineStore('newsSetting', () => {
   /** 全部 AI 字段，按展示顺序；未加载时为 null */
   const aiFields = ref<NewsAiFieldSetting[] | null>(null)
   const aiModel = ref<NewsAiModelSetting | null>(null)
-  const notificationChannel = ref<NewsFeishuNotificationSetting | null>(null)
+  const feishuChannel = ref<NewsFeishuChannel | null>(null)
   /** 全部拒绝理由，按排序；未加载时为 null */
   const rejectReasons = ref<NewsRejectReasonSetting[] | null>(null)
 
@@ -36,9 +36,9 @@ export const useNewsSettingStore = defineStore('newsSetting', () => {
     return aiModel.value
   }
 
-  const ensureNotificationChannel = async () => {
-    notificationChannel.value ??= await getNotificationChannelApi()
-    return notificationChannel.value
+  const ensureFeishuChannel = async () => {
+    feishuChannel.value ??= await getFeishuChannelApi()
+    return feishuChannel.value
   }
 
   /** 未加载过才请求 */
@@ -49,13 +49,13 @@ export const useNewsSettingStore = defineStore('newsSetting', () => {
   return {
     aiFields,
     aiModel,
-    notificationChannel,
+    feishuChannel,
     rejectReasons,
     refreshAiFields,
     refreshRejectReasons,
     ensureAiFields,
     ensureAiModel,
-    ensureNotificationChannel,
+    ensureFeishuChannel,
     ensureRejectReasons
   }
 })

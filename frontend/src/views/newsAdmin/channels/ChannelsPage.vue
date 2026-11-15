@@ -17,7 +17,7 @@ import RunsDrawer from './components/RunsDrawer.vue'
 import TodoView from './components/TodoView.vue'
 
 /**
- * 渠道配置：左侧 220px 渠道栏 + 右侧当前渠道视图或「需处理」视图。
+ * 渠道代理配置：左侧 220px 渠道栏 + 右侧当前渠道视图或「需处理」视图。
  * 支持 ?channel=渠道标识&settings=1：选中该渠道并打开渠道设置（飞书凭证失效通知里的链接）。
  */
 const route = useRoute()
@@ -141,30 +141,17 @@ watch(() => route.query, applyRouteQuery)
 </template>
 
 <style scoped lang="scss">
+@use '../components/newsConfigLayout' as *;
+
 .channels-page {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  overflow: hidden;
+  @include config-page;
 }
 
 .channels-main {
-  position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-content: start;
-  overflow: auto;
+  @include config-main;
 }
 
 .channels-inner {
-  width: 100%;
-  max-width: 1120px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--zg-space-xl);
-  padding: 20px var(--zg-space-2xl) 48px;
+  @include config-inner;
 }
 </style>

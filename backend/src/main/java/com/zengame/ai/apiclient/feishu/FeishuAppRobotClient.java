@@ -3,7 +3,6 @@ package com.zengame.ai.apiclient.feishu;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Suppliers;
 import com.google.common.hash.Hashing;
 import com.zengame.ai.infrastructure.exception.BusinessException;
@@ -28,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -41,6 +41,7 @@ public class FeishuAppRobotClient {
     private static final String USER_TOKEN_URL = "https://open.feishu.cn/open-apis/authen/v2/oauth/token";
     private static final String USER_INFO_URL = "https://open.feishu.cn/open-apis/authen/v1/user_info";
     private static final String MESSAGE_URL = "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id";
+    private static final String BOT_INFO_URL = "https://open.feishu.cn/open-apis/bot/v3/info";
     private static final Map<Integer, String> ERROR_HINTS = Map.of(
             20002, "请重新复制同一个应用的 App ID 和最新的 App Secret",
             20009, "请确认飞书自建应用已发布并安装",
@@ -62,8 +63,32 @@ public class FeishuAppRobotClient {
      * @return 发送单聊文本的函数，飞书拒绝请求时抛出 BusinessException
      */
     public Consumer<String> sender(Recipient target) {
-        Supplier<String> token = Suppliers.memoize(() -> getToken(target));
-        return text -> sendText(token.get(), target.getOpenId(), text);
+        Supplier<String> token = Suppliers.memoize(() -> getToken(target.getAppId(), target.getAppSecret()));
+        return text -> sendMessage(token.get(), target.getOpenId(), "text",
+                JacksonUtil.writeValueAsString(new Text(text)));
+    }
+
+    /**
+     * @param credentials 发送卡片的飞书应用
+     * @return 向指定接收人发送卡片 JSON 的函数
+     */
+    public BiConsumer<String, String> cardSender(AppCredentials credentials) {
+        Supplier<String> token = Suppliers.memoize(() -> getToken(credentials.getAppId(), credentials.getAppSecret()));
+        return (openId, content) -> sendMessage(token.get(), openId, "interactive", content);
+    }
+
+    /**
+     * @param credentials 飞书应用凭证
+     * @return 应用机器人的名称和头像；飞书拒绝请求时抛出 BusinessException
+     */
+    public BotProfile getBotProfile(AppCredentials credentials) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(getToken(credentials.getAppId(), credentials.getAppSecret()));
+        BotInfoReply reply = exchange(BOT_INFO_URL, HttpMethod.GET, new HttpEntity<>(headers),
+                BotInfoReply.class, "获取飞书应用信息失败");
+        requireSuccess(Optional.ofNullable(reply).map(BotInfoReply::getCode), "获取飞书应用信息失败");
+        return Optional.ofNullable(reply.getBot())
+                .orElseThrow(() -> new BusinessException("飞书未返回应用机器人信息"));
     }
 
     /**
@@ -105,8 +130,8 @@ public class FeishuAppRobotClient {
                 .orElseThrow(() -> new BusinessException("飞书未返回接收人的 Open ID"));
     }
 
-    private String getToken(Recipient target) {
-        TokenRequest request = new TokenRequest("client_credentials", target.getAppId(), target.getAppSecret());
+    private String getToken(String appId, String appSecret) {
+        TokenRequest request = new TokenRequest("client_credentials", appId, appSecret);
         return readToken(TOKEN_URL, request, "飞书应用鉴权失败");
     }
 
@@ -117,21 +142,25 @@ public class FeishuAppRobotClient {
                 .orElseThrow(() -> new BusinessException("飞书未返回访问令牌"));
     }
 
-    private void sendText(String token, String openId, String text) {
+    private void sendMessage(String token, String openId, String messageType, String content) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(token);
-        MessageRequest message = new MessageRequest(openId, "text", JacksonUtil.writeValueAsString(new Text(text)));
+        MessageRequest message = new MessageRequest(openId, messageType, content);
         MessageReply reply = exchange(MESSAGE_URL, HttpMethod.POST, new HttpEntity<>(message, headers),
                 MessageReply.class, "飞书单聊发送失败");
-        requireSuccess(Optional.ofNullable(reply).map(MessageReply::getCode), "飞书单聊发送失败");
+        if (Optional.ofNullable(reply).map(MessageReply::getCode).filter(code -> code == 0).isEmpty()) {
+            throw rejected("飞书单聊发送失败", reply);
+        }
     }
 
     private <T> T exchange(String url, HttpMethod method, HttpEntity<?> request, Class<T> responseType, String failure) {
         try {
             return restTemplate.exchange(url, method, request, responseType).getBody();
         } catch (RestClientResponseException e) {
-            throw rejected(failure + "，HTTP " + e.getRawStatusCode(), responseCode(e));
+            String httpFailure = failure + "，HTTP " + e.getRawStatusCode();
+            throw responseError(e).map(reply -> rejected(httpFailure, reply))
+                    .orElseGet(() -> rejected(httpFailure, Optional.empty()));
         } catch (ResourceAccessException e) {
             throw new BusinessException(failure + "，请检查服务端到飞书的网络连接");
         } catch (RestClientException e) {
@@ -151,13 +180,19 @@ public class FeishuAppRobotClient {
         return new BusinessException(failure + number + hint);
     }
 
-    private Optional<Integer> responseCode(RestClientResponseException response) {
+    private BusinessException rejected(String failure, MessageReply reply) {
+        var response = Optional.ofNullable(reply);
+        String detail = response.map(MessageReply::getMsg).filter(StringUtils::isNotBlank)
+                .map(message -> "，" + message).orElse("");
+        String requestId = response.map(MessageReply::getError).map(MessageError::getLogId)
+                .filter(StringUtils::isNotBlank).map(id -> "（请求标识 " + id + "）").orElse("");
+        return rejected(failure + detail + requestId, response.map(MessageReply::getCode));
+    }
+
+    private Optional<MessageReply> responseError(RestClientResponseException response) {
         try {
-            return Optional.ofNullable(JacksonUtil.getObjectMapper().readTree(response.getResponseBodyAsString()))
-                    .map(body -> body.path("code"))
-                    .filter(JsonNode::isIntegralNumber)
-                    .filter(JsonNode::canConvertToInt)
-                    .map(JsonNode::intValue);
+            return Optional.ofNullable(JacksonUtil.getObjectMapper().readValue(response.getResponseBodyAsString(),
+                    MessageReply.class));
         } catch (JsonProcessingException e) {
             return Optional.empty();
         }
@@ -194,6 +229,22 @@ public class FeishuAppRobotClient {
         private String name;
         @JsonProperty("avatar_url")
         private String avatarUrl;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class BotProfile {
+        @JsonProperty("app_name")
+        private String name;
+        @JsonProperty("avatar_url")
+        private String avatarUrl;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class BotInfoReply {
+        Integer code;
+        BotProfile bot;
     }
 
     @Value
@@ -257,5 +308,14 @@ public class FeishuAppRobotClient {
     @JsonIgnoreProperties(ignoreUnknown = true)
     private static class MessageReply {
         Integer code;
+        String msg;
+        MessageError error;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class MessageError {
+        @JsonProperty("log_id")
+        String logId;
     }
 }

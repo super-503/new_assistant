@@ -69,16 +69,10 @@ const visibleChannels = computed(() => {
 </template>
 
 <style scoped lang="scss">
-@use '../../components/newsMixins' as *;
+@use '../../components/newsConfigLayout' as *;
 
 .channel-side {
-  flex: 0 0 220px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--zg-space-2xs);
-  padding: var(--zg-space-lg) var(--zg-space-md);
-  border-right: 1px solid var(--surface-border);
-  overflow-y: auto;
+  @include config-nav;
 }
 
 .side-search {
@@ -87,35 +81,11 @@ const visibleChannels = computed(() => {
 }
 
 .side-item {
-  @include reset-button;
-  @include state-layer;
-  @include focus-ring(-2px);
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  height: 40px;
-  padding: 0 var(--zg-space-lg);
-  border-radius: var(--zg-radius-pill);
-  color: var(--main-color);
-  font-size: var(--zg-text-base);
-  font-weight: var(--zg-weight-medium);
-  transition: background var(--zg-duration-base) var(--zg-ease-m3-standard);
-
-  &.is-active {
-    background: var(--selected-bg);
-    color: var(--selected-text);
-    font-weight: var(--zg-weight-semibold);
-  }
+  @include config-nav-item;
 
   &.is-disabled:not(.is-active) {
     color: var(--second-color);
     opacity: 0.6;
-  }
-
-  :deep(.svg-icon) {
-    cursor: inherit;
   }
 }
 

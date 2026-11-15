@@ -101,5 +101,5 @@ onBeforeUnmount(stop)
 
 <template>
   <el-button v-if="authorizing" plain @click="stop">取消授权</el-button>
-  <el-button v-else plain :disabled="!canAuthorize" @click="authorize">授权飞书</el-button>
+  <el-button v-else type="primary" :disabled="!canAuthorize" @click="authorize">授权飞书</el-button>
 </template>

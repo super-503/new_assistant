@@ -30,7 +30,7 @@ public enum NewsContentType implements CodeEnum {
      * @param code 枚举编码
      * @return 编码对应的内容类型
      */
-    @JsonCreator
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static NewsContentType fromCode(String code) {
         return CodeEnumUtils.fromCode(code, NewsContentType.class);
     }

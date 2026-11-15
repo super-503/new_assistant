@@ -1,0 +1,66 @@
+@use './newsMixins' as *;
+
+@mixin config-page {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+@mixin config-main {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  overflow: auto;
+}
+
+@mixin config-inner {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--zg-space-xl);
+  padding: 20px var(--zg-space-2xl) 48px;
+}
+
+@mixin config-nav {
+  flex: 0 0 220px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--zg-space-2xs);
+  padding: var(--zg-space-lg) var(--zg-space-md);
+  border-right: 1px solid var(--surface-border);
+  overflow-y: auto;
+}
+
+@mixin config-nav-item {
+  @include reset-button;
+  @include state-layer;
+  @include focus-ring(-2px);
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--zg-space-lg);
+  border-radius: var(--zg-radius-pill);
+  color: var(--main-color);
+  font-size: var(--zg-text-base);
+  font-weight: var(--zg-weight-medium);
+  transition: background var(--zg-duration-base) var(--zg-ease-m3-standard);
+
+  &.is-active {
+    background: var(--selected-bg);
+    color: var(--selected-text);
+    font-weight: var(--zg-weight-semibold);
+  }
+
+  :deep(.svg-icon) {
+    cursor: inherit;
+  }
+}

@@ -1,7 +1,9 @@
 package com.zengame.ai.task;
 
 import com.zengame.ai.business.news.library.NewsDigestService;
+import com.zengame.ai.business.news.library.NewsFeishuDigestService;
 import com.zengame.ai.business.news.setting.NewsFeishuNotificationSettingService;
+import com.zengame.ai.repository.ai.mapper.NewsPushPlanMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,11 +19,19 @@ public class NewsDigestTask {
 
     private final NewsFeishuNotificationSettingService notificationSettings;
     private final NewsDigestService newsDigestService;
+    private final NewsFeishuDigestService feishuDigestService;
+    private final NewsPushPlanMapper pushPlans;
 
     /** 有已启用的通知目标时，分批发送待发资讯。 */
     @Scheduled(cron = "${news.digest-cron}", zone = "${news.time-zone}")
     public void sendDigest() {
-        notificationSettings.digestSender().ifPresent(this::send);
+        if (pushPlans.existsPlans()) return;
+        notificationSettings.cardDigestDelivery().ifPresentOrElse(delivery -> {
+            if (delivery.getTargets().isEmpty()) return;
+            while (feishuDigestService.sendBatch(delivery)) {
+                log.info("飞书日报卡片批次已发送");
+            }
+        }, () -> notificationSettings.digestSender().ifPresent(this::send));
     }
 
     private void send(Consumer<String> sender) {
